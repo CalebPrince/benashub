@@ -31,9 +31,12 @@ def register():
     email = (data.get("email") or "").strip().lower()
     phone = (data.get("phone") or "").strip()
     password = data.get("password") or ""
+    terms_accepted = bool(data.get("terms_accepted"))
 
     if not name or not email or not password:
         return jsonify({"error": "Name, email, and password are required"}), 400
+    if not terms_accepted:
+        return jsonify({"error": "You must agree to the Terms of Use before creating an account"}), 400
     if not EMAIL_RE.match(email):
         return jsonify({"error": "Enter a valid email address"}), 400
     if len(password) < 8:

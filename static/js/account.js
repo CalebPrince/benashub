@@ -38,12 +38,18 @@ BH.account = (() => {
       e.preventDefault();
       errorEl.classList.add('d-none');
       const formData = new FormData(form);
+      if (!form.querySelector('input[name="terms_accepted"]').checked) {
+        errorEl.textContent = 'Please agree to the Terms of Use to create an account.';
+        errorEl.classList.remove('d-none');
+        return;
+      }
       try {
         await BH.api.post('/customers/register', {
           name: formData.get('name'),
           email: formData.get('email'),
           phone: formData.get('phone'),
           password: formData.get('password'),
+          terms_accepted: formData.get('terms_accepted') === 'on',
         });
         window.location.href = '/account';
       } catch (err) {

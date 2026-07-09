@@ -31,6 +31,13 @@
             <input type="password" class="form-control" name="password" required minlength="8">
             <div class="form-text">At least 8 characters.</div>
           </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="terms_accepted" id="termsAcceptedCheck" required>
+            <label class="form-check-label small" for="termsAcceptedCheck">
+              I agree to the <a href="{{ url_for('pages.terms_of_use') }}" target="_blank" rel="noopener">Terms of Use</a>
+              and <a href="{{ url_for('pages.privacy_policy') }}" target="_blank" rel="noopener">Privacy Policy</a>.
+            </label>
+          </div>
           <button type="submit" class="btn bh-btn-red w-100">Create Account</button>
         </form>
         <p class="small text-secondary text-center mt-3 mb-0">

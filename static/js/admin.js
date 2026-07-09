@@ -617,8 +617,8 @@ BH.admin = (() => {
   }
 
   const SETTINGS_FIELDS = [
-    'paystack_secret_key', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
-    'smtp_encryption', 'mail_from_name', 'mail_from_email', 'admin_notify_email',
+    'paystack_secret_key', 'paystack_public_key', 'smtp_host', 'smtp_port', 'smtp_username',
+    'smtp_password', 'smtp_encryption', 'mail_from_name', 'mail_from_email', 'admin_notify_email',
   ];
 
   function wireSettingsTab() {
@@ -626,6 +626,13 @@ BH.admin = (() => {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       await saveSettings(form);
+    });
+    const webhookInput = document.getElementById('webhookUrlInput');
+    webhookInput.value = window.location.origin + '/api/payments/paystack/webhook';
+    document.getElementById('copyWebhookBtn').addEventListener('click', async (e) => {
+      await navigator.clipboard.writeText(webhookInput.value);
+      e.target.textContent = 'Copied!';
+      setTimeout(() => { e.target.textContent = 'Copy'; }, 1500);
     });
     document.getElementById('testEmailBtn').addEventListener('click', async () => {
       const resultEl = document.getElementById('testEmailResult');

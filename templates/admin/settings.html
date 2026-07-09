@@ -17,6 +17,18 @@
           <label class="form-label">Paystack Secret Key</label>
           <input type="password" class="form-control" name="paystack_secret_key" id="paystackSecretKeyInput" placeholder="sk_test_..." autocomplete="off">
         </div>
+        <div class="mb-3">
+          <label class="form-label">Paystack Public Key</label>
+          <input type="text" class="form-control" name="paystack_public_key" placeholder="pk_test_..." autocomplete="off">
+          <div class="form-text">From the same API Keys &amp; Webhooks page. Safe to expose in the browser.</div>
+        </div>
+        <hr>
+        <label class="form-label">Webhook URL</label>
+        <div class="d-flex gap-2">
+          <input type="text" class="form-control form-control-sm" id="webhookUrlInput" readonly>
+          <button type="button" class="btn btn-outline-dark btn-sm text-nowrap" id="copyWebhookBtn">Copy</button>
+        </div>
+        <div class="form-text">Paste this into your Paystack dashboard under Settings &gt; API Keys &amp; Webhooks &gt; Webhook URL, so payments are still confirmed even if a customer closes the tab after paying.</div>
       </div>
     </div>
     <div class="col-lg-6">

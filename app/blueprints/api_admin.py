@@ -396,6 +396,7 @@ def update_shipping_rate(rate_id):
 
 SETTINGS_KEYS = (
     "paystack_secret_key",
+    "paystack_public_key",
     "smtp_host",
     "smtp_port",
     "smtp_username",

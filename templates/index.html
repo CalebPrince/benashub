@@ -3,13 +3,19 @@
 
 <section class="bh-hero">
   <div class="bh-hero-hexagons" aria-hidden="true"></div>
+  <div id="homePromoBanner" class="bh-promo-banner d-none">
+    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+      <span id="homePromoText"></span>
+      <a id="homePromoLink" class="bh-promo-link" href="{{ url_for('pages.catalog') }}">Shop now</a>
+    </div>
+  </div>
   <div class="container py-5">
     <div class="row align-items-center">
       <div class="col-lg-7">
-        <p class="bh-eyebrow">Products &amp; Services</p>
-        <h1 class="bh-hero-title">Organic household &amp; health products, delivered.</h1>
-        <p class="bh-hero-text">Benas Hub distributes organic household and health products across Ghana &mdash; and ships select items abroad.</p>
-        <a href="{{ url_for('pages.catalog') }}" class="btn btn-lg bh-btn-red">Shop Now</a>
+        <p class="bh-eyebrow" id="homeEyebrow">Products &amp; Services</p>
+        <h1 class="bh-hero-title" id="homeTitle">Organic household &amp; health products, delivered.</h1>
+        <p class="bh-hero-text" id="homeIntro">Benas Hub distributes organic household and health products across Ghana &mdash; and ships select items abroad.</p>
+        <a href="{{ url_for('pages.catalog') }}" class="btn btn-lg bh-btn-red" id="homePrimaryCta">Shop Now</a>
       </div>
     </div>
   </div>
@@ -22,8 +28,8 @@
         <div class="bh-mini-feature">
           <span class="bh-mini-feature-icon">&check;</span>
           <div>
-            <h6>Organic Essentials</h6>
-            <p>Practical household, personal care, and wellness products selected for everyday use.</p>
+            <h6 id="homeFeature1Title">Organic Essentials</h6>
+            <p id="homeFeature1Text">Practical household, personal care, and wellness products selected for everyday use.</p>
           </div>
         </div>
       </div>
@@ -31,8 +37,8 @@
         <div class="bh-mini-feature">
           <span class="bh-mini-feature-icon">&nearr;</span>
           <div>
-            <h6>Ghana &amp; Abroad</h6>
-            <p>Domestic delivery plus international shipping on eligible products.</p>
+            <h6 id="homeFeature2Title">Ghana &amp; Abroad</h6>
+            <p id="homeFeature2Text">Domestic delivery plus international shipping on eligible products.</p>
           </div>
         </div>
       </div>
@@ -40,8 +46,8 @@
         <div class="bh-mini-feature">
           <span class="bh-mini-feature-icon">#</span>
           <div>
-            <h6>Order Tracking</h6>
-            <p>Customers can check order progress with their reference and email address.</p>
+            <h6 id="homeFeature3Title">Order Tracking</h6>
+            <p id="homeFeature3Text">Customers can check order progress with their reference and email address.</p>
           </div>
         </div>
       </div>
@@ -75,8 +81,8 @@
 <section class="container py-5">
   <div class="row g-4 align-items-start">
     <div class="col-lg-5">
-      <h2 class="bh-section-title mb-3">Why Customers Choose Benas Hub</h2>
-      <p class="text-secondary mb-0">We keep the shopping experience simple: useful organic products, clear stock information, checkout with delivery estimates, and account tools for orders and reviews.</p>
+      <h2 class="bh-section-title mb-3" id="homeWhyTitle">Why Customers Choose Benas Hub</h2>
+      <p class="text-secondary mb-0" id="homeWhyText">We keep the shopping experience simple: useful organic products, clear stock information, checkout with delivery estimates, and account tools for orders and reviews.</p>
     </div>
     <div class="col-lg-7">
       <div class="row g-3">
@@ -116,22 +122,22 @@
       <div class="col-md-4">
         <div class="bh-testimonial">
           <div class="bh-stars mb-2">&starf;&starf;&starf;&starf;&starf;</div>
-          <p>Clean products, smooth checkout, and delivery updates that make it easy to plan.</p>
-          <strong>Akua M.</strong>
+          <p id="testimonial1Text">Clean products, smooth checkout, and delivery updates that make it easy to plan.</p>
+          <strong id="testimonial1Name">Akua M.</strong>
         </div>
       </div>
       <div class="col-md-4">
         <div class="bh-testimonial">
           <div class="bh-stars mb-2">&starf;&starf;&starf;&starf;&starf;</div>
-          <p>The household items feel practical and reliable. I like seeing shipping eligibility before buying.</p>
-          <strong>Daniel A.</strong>
+          <p id="testimonial2Text">The household items feel practical and reliable. I like seeing shipping eligibility before buying.</p>
+          <strong id="testimonial2Name">Daniel A.</strong>
         </div>
       </div>
       <div class="col-md-4">
         <div class="bh-testimonial">
           <div class="bh-stars mb-2">&starf;&starf;&starf;&starf;&starf;</div>
-          <p>Good range of organic products, and the order tracking page is straightforward.</p>
-          <strong>Efua B.</strong>
+          <p id="testimonial3Text">Good range of organic products, and the order tracking page is straightforward.</p>
+          <strong id="testimonial3Name">Efua B.</strong>
         </div>
       </div>
     </div>

@@ -162,6 +162,14 @@ def admin_discount_codes():
     return render_template("admin/discount_codes.html", active_page="discount-codes")
 
 
+@pages_bp.route("/admin/site-content")
+def admin_site_content():
+    guard = _require_admin()
+    if guard:
+        return guard
+    return render_template("admin/site_content.html", active_page="site-content")
+
+
 @pages_bp.route("/admin/shipping-rates")
 def admin_shipping_rates():
     guard = _require_admin()

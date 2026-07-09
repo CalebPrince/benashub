@@ -48,6 +48,7 @@ BH.products = (() => {
   async function initHome() {
     const tiles = document.getElementById('categoryTiles');
     const featured = document.getElementById('featuredProducts');
+    await loadSiteContent();
 
     try {
       const categories = await BH.api.get('/categories');
@@ -83,6 +84,64 @@ BH.products = (() => {
         wireAddToCartButtons(newArrivalsEl, arrivals);
       }
     } catch (e) { /* leave featured empty on failure */ }
+  }
+
+  async function loadSiteContent() {
+    try {
+      const content = await BH.api.get('/site-content');
+      setText('homeEyebrow', content.home_eyebrow);
+      setText('homeTitle', content.home_title);
+      setText('homeIntro', content.home_intro);
+      setText('homeFeature1Title', content.home_feature_1_title);
+      setText('homeFeature1Text', content.home_feature_1_text);
+      setText('homeFeature2Title', content.home_feature_2_title);
+      setText('homeFeature2Text', content.home_feature_2_text);
+      setText('homeFeature3Title', content.home_feature_3_title);
+      setText('homeFeature3Text', content.home_feature_3_text);
+      setText('homeWhyTitle', content.home_why_title);
+      setText('homeWhyText', content.home_why_text);
+      setText('testimonial1Name', content.testimonial_1_name);
+      setText('testimonial1Text', content.testimonial_1_text);
+      setText('testimonial2Name', content.testimonial_2_name);
+      setText('testimonial2Text', content.testimonial_2_text);
+      setText('testimonial3Name', content.testimonial_3_name);
+      setText('testimonial3Text', content.testimonial_3_text);
+      setLink('homePrimaryCta', content.home_primary_cta_text, content.home_primary_cta_url);
+      renderPromo(content);
+      if (content.site_meta_title) document.title = content.site_meta_title;
+      setMetaDescription(content.site_meta_description);
+    } catch (e) { /* keep template defaults */ }
+  }
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el && value) el.textContent = value;
+  }
+
+  function setLink(id, text, href) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (text) el.textContent = text;
+    if (href) el.href = href;
+  }
+
+  function renderPromo(content) {
+    const banner = document.getElementById('homePromoBanner');
+    if (!banner || content.home_promo_enabled !== '1' || !content.home_promo_text) return;
+    document.getElementById('homePromoText').textContent = content.home_promo_text;
+    setLink('homePromoLink', content.home_promo_link_text || 'Shop now', content.home_promo_link_url || '/catalog');
+    banner.classList.remove('d-none');
+  }
+
+  function setMetaDescription(value) {
+    if (!value) return;
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.appendChild(meta);
+    }
+    meta.content = value;
   }
 
   async function initCatalog() {

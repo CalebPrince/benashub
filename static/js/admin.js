@@ -835,8 +835,64 @@ BH.admin = (() => {
     }
   }
 
+  // ---------- SITE CONTENT ----------
+
+  const SITE_CONTENT_FIELDS = [
+    'home_promo_enabled', 'home_promo_text', 'home_promo_link_text', 'home_promo_link_url',
+    'home_eyebrow', 'home_title', 'home_intro', 'home_primary_cta_text', 'home_primary_cta_url',
+    'home_feature_1_title', 'home_feature_1_text', 'home_feature_2_title', 'home_feature_2_text',
+    'home_feature_3_title', 'home_feature_3_text', 'home_why_title', 'home_why_text',
+    'testimonial_1_name', 'testimonial_1_text', 'testimonial_2_name', 'testimonial_2_text',
+    'testimonial_3_name', 'testimonial_3_text', 'site_meta_title', 'site_meta_description',
+  ];
+
+  async function initSiteContent() {
+    if (!(await initAdminChrome())) return;
+    const form = document.getElementById('siteContentForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveSiteContent(form);
+    });
+    await loadSiteContent(form);
+  }
+
+  async function loadSiteContent(form) {
+    const content = await BH.api.get('/admin/site-content');
+    SITE_CONTENT_FIELDS.forEach((key) => {
+      if (!form.elements[key]) return;
+      if (key === 'home_promo_enabled') {
+        form.elements[key].checked = content[key] === '1';
+      } else {
+        form.elements[key].value = content[key] || '';
+      }
+    });
+  }
+
+  async function saveSiteContent(form) {
+    const savedEl = document.getElementById('siteContentSaved');
+    const errorEl = document.getElementById('siteContentError');
+    savedEl.classList.add('d-none');
+    errorEl.classList.add('d-none');
+
+    const formData = new FormData(form);
+    const payload = {};
+    SITE_CONTENT_FIELDS.forEach((key) => {
+      payload[key] = key === 'home_promo_enabled'
+        ? (form.elements[key].checked ? '1' : '0')
+        : formData.get(key);
+    });
+
+    try {
+      await BH.api.put('/admin/site-content', payload);
+      savedEl.classList.remove('d-none');
+    } catch (err) {
+      errorEl.textContent = err.message || 'Could not save site content';
+      errorEl.classList.remove('d-none');
+    }
+  }
+
   return {
     initLogin, initOverview, initProducts, initCategories, initOrders,
-    initCustomers, initReviews, initDiscountCodes, initShippingRates, initSettings,
+    initCustomers, initReviews, initDiscountCodes, initShippingRates, initSettings, initSiteContent,
   };
 })();

@@ -1,8 +1,37 @@
 from flask import Blueprint, jsonify, request, session
 
 from ..db import get_db
+from ..settings import get_setting
 
 api_catalog_bp = Blueprint("api_catalog", __name__)
+
+SITE_CONTENT_KEYS = (
+    "home_promo_enabled",
+    "home_promo_text",
+    "home_promo_link_text",
+    "home_promo_link_url",
+    "home_eyebrow",
+    "home_title",
+    "home_intro",
+    "home_primary_cta_text",
+    "home_primary_cta_url",
+    "home_feature_1_title",
+    "home_feature_1_text",
+    "home_feature_2_title",
+    "home_feature_2_text",
+    "home_feature_3_title",
+    "home_feature_3_text",
+    "home_why_title",
+    "home_why_text",
+    "testimonial_1_name",
+    "testimonial_1_text",
+    "testimonial_2_name",
+    "testimonial_2_text",
+    "testimonial_3_name",
+    "testimonial_3_text",
+    "site_meta_title",
+    "site_meta_description",
+)
 
 PRODUCT_SELECT = """
     SELECT p.*, COALESCE(AVG(r.rating), 0) AS avg_rating, COUNT(r.id) AS review_count
@@ -10,6 +39,12 @@ PRODUCT_SELECT = """
     JOIN categories c ON p.category_id = c.id
     LEFT JOIN reviews r ON r.product_id = p.id
 """
+
+
+@api_catalog_bp.route("/site-content")
+def get_site_content():
+    db = get_db()
+    return jsonify({key: get_setting(db, key, "") or "" for key in SITE_CONTENT_KEYS})
 
 
 def product_to_dict(row):

@@ -429,6 +429,35 @@ SETTINGS_KEYS = (
 )
 
 
+SITE_CONTENT_KEYS = (
+    "home_promo_enabled",
+    "home_promo_text",
+    "home_promo_link_text",
+    "home_promo_link_url",
+    "home_eyebrow",
+    "home_title",
+    "home_intro",
+    "home_primary_cta_text",
+    "home_primary_cta_url",
+    "home_feature_1_title",
+    "home_feature_1_text",
+    "home_feature_2_title",
+    "home_feature_2_text",
+    "home_feature_3_title",
+    "home_feature_3_text",
+    "home_why_title",
+    "home_why_text",
+    "testimonial_1_name",
+    "testimonial_1_text",
+    "testimonial_2_name",
+    "testimonial_2_text",
+    "testimonial_3_name",
+    "testimonial_3_text",
+    "site_meta_title",
+    "site_meta_description",
+)
+
+
 @api_admin_bp.route("/settings", methods=["GET"])
 @login_required
 def get_settings():
@@ -442,6 +471,25 @@ def update_settings():
     data = request.get_json(force=True, silent=True) or {}
     db = get_db()
     for key in SETTINGS_KEYS:
+        if key in data:
+            set_setting(db, key, (data[key] or "").strip())
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@api_admin_bp.route("/site-content", methods=["GET"])
+@login_required
+def get_site_content_admin():
+    db = get_db()
+    return jsonify({key: get_setting(db, key, "") or "" for key in SITE_CONTENT_KEYS})
+
+
+@api_admin_bp.route("/site-content", methods=["PUT"])
+@login_required
+def update_site_content_admin():
+    data = request.get_json(force=True, silent=True) or {}
+    db = get_db()
+    for key in SITE_CONTENT_KEYS:
         if key in data:
             set_setting(db, key, (data[key] or "").strip())
     db.commit()

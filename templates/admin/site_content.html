@@ -1,0 +1,135 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Site Content &mdash; Benas Hub Admin{% endblock %}
+{% block admin_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="mb-1">Site Content</h3>
+    <p class="text-secondary mb-0 small">Control homepage copy, promo banner, testimonials, and default SEO text.</p>
+  </div>
+  <a href="{{ url_for('pages.index') }}" class="btn btn-outline-dark btn-sm" target="_blank">View Home</a>
+</div>
+
+<div id="siteContentSaved" class="alert alert-success d-none">Saved.</div>
+<div id="siteContentError" class="alert alert-danger d-none"></div>
+
+<form id="siteContentForm">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="bh-filter-card">
+        <h5 class="mb-3">Promo Banner</h5>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" name="home_promo_enabled" id="homePromoEnabled">
+          <label class="form-check-label" for="homePromoEnabled">Show promo banner</label>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Promo Text</label>
+          <input type="text" class="form-control" name="home_promo_text" placeholder="Use WELCOME10 for 10% off your first order">
+        </div>
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label class="form-label">Link Text</label>
+            <input type="text" class="form-control" name="home_promo_link_text" placeholder="Shop now">
+          </div>
+          <div class="col-md-7">
+            <label class="form-label">Link URL</label>
+            <input type="text" class="form-control" name="home_promo_link_url" placeholder="/catalog">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="bh-filter-card">
+        <h5 class="mb-3">Homepage Hero</h5>
+        <div class="mb-3">
+          <label class="form-label">Eyebrow</label>
+          <input type="text" class="form-control" name="home_eyebrow" placeholder="Products & Services">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Headline</label>
+          <input type="text" class="form-control" name="home_title" placeholder="Organic household & health products, delivered.">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Intro</label>
+          <textarea class="form-control" name="home_intro" rows="3"></textarea>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label class="form-label">Button Text</label>
+            <input type="text" class="form-control" name="home_primary_cta_text" placeholder="Shop Now">
+          </div>
+          <div class="col-md-7">
+            <label class="form-label">Button URL</label>
+            <input type="text" class="form-control" name="home_primary_cta_url" placeholder="/catalog">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="bh-filter-card">
+        <h5 class="mb-3">Feature Strip</h5>
+        {% for n in [1, 2, 3] %}
+          <div class="mb-3">
+            <label class="form-label">Feature {{ n }} Title</label>
+            <input type="text" class="form-control" name="home_feature_{{ n }}_title">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Feature {{ n }} Text</label>
+            <textarea class="form-control" name="home_feature_{{ n }}_text" rows="2"></textarea>
+          </div>
+          {% if n != 3 %}<hr>{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="bh-filter-card">
+        <h5 class="mb-3">Why Choose Us</h5>
+        <div class="mb-3">
+          <label class="form-label">Section Title</label>
+          <input type="text" class="form-control" name="home_why_title">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Section Text</label>
+          <textarea class="form-control" name="home_why_text" rows="4"></textarea>
+        </div>
+        <hr>
+        <h5 class="mb-3">Default SEO</h5>
+        <div class="mb-3">
+          <label class="form-label">Meta Title</label>
+          <input type="text" class="form-control" name="site_meta_title">
+        </div>
+        <div class="mb-0">
+          <label class="form-label">Meta Description</label>
+          <textarea class="form-control" name="site_meta_description" rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="bh-filter-card">
+        <h5 class="mb-3">Testimonials</h5>
+        <div class="row g-3">
+          {% for n in [1, 2, 3] %}
+            <div class="col-lg-4">
+              <label class="form-label">Customer {{ n }} Name</label>
+              <input type="text" class="form-control mb-3" name="testimonial_{{ n }}_name">
+              <label class="form-label">Customer {{ n }} Text</label>
+              <textarea class="form-control" name="testimonial_{{ n }}_text" rows="4"></textarea>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <button type="submit" class="btn bh-btn-red">Save Site Content</button>
+  </div>
+</form>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>document.addEventListener('DOMContentLoaded', () => BH.admin.initSiteContent());</script>
+{% endblock %}

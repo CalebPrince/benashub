@@ -258,6 +258,22 @@ body {
   color: #fff;
   overflow: hidden;
 }
+.bh-promo-banner {
+  position: relative;
+  z-index: 1;
+  background: var(--bh-red);
+  color: #fff;
+  padding: 0.7rem 0;
+  font-weight: 700;
+}
+.bh-promo-link {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.bh-promo-link:hover {
+  color: #fff;
+}
 .bh-hero-hexagons {
   position: absolute;
   top: -40px;

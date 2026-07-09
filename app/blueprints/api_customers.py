@@ -216,3 +216,65 @@ def get_orders():
             for r in rows
         ]
     )
+
+
+@api_customers_bp.route("/wishlist")
+@customer_login_required
+def get_wishlist():
+    db = get_db()
+    rows = db.execute(
+        """SELECT p.*, w.created_at AS saved_at
+           FROM customer_wishlist w
+           JOIN products p ON p.id = w.product_id
+           WHERE w.customer_id = ? AND p.is_active = 1
+           ORDER BY w.created_at DESC""",
+        (session["customer_id"],),
+    ).fetchall()
+    return jsonify(
+        [
+            {
+                "id": r["id"],
+                "name": r["name"],
+                "slug": r["slug"],
+                "price_pesewas": r["price_pesewas"],
+                "image_url": r["image_url"],
+                "ships_internationally": bool(r["ships_internationally"]),
+                "saved_at": r["saved_at"],
+            }
+            for r in rows
+        ]
+    )
+
+
+@api_customers_bp.route("/wishlist", methods=["POST"])
+@customer_login_required
+def add_wishlist_item():
+    data = request.get_json(force=True, silent=True) or {}
+    try:
+        product_id = int(data.get("product_id"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid product"}), 400
+
+    db = get_db()
+    product = db.execute("SELECT id FROM products WHERE id = ? AND is_active = 1", (product_id,)).fetchone()
+    if product is None:
+        return jsonify({"error": "Product not found"}), 404
+    db.execute(
+        """INSERT OR IGNORE INTO customer_wishlist (customer_id, product_id)
+           VALUES (?, ?)""",
+        (session["customer_id"], product_id),
+    )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@api_customers_bp.route("/wishlist/<int:product_id>", methods=["DELETE"])
+@customer_login_required
+def remove_wishlist_item(product_id):
+    db = get_db()
+    db.execute(
+        "DELETE FROM customer_wishlist WHERE customer_id = ? AND product_id = ?",
+        (session["customer_id"], product_id),
+    )
+    db.commit()
+    return jsonify({"ok": True})

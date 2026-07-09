@@ -338,6 +338,22 @@ body {
   object-fit: cover;
   background: var(--bh-gray-bg);
 }
+.bh-card-badges {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.bh-card-badges span {
+  background: var(--bh-red);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.25rem 0.55rem;
+}
 .bh-product-card .card-body {
   padding: 1rem;
 }
@@ -356,6 +372,33 @@ body {
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.03em;
+}
+.bh-gallery-main {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: var(--bh-gray-bg);
+}
+.bh-gallery-thumbs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.bh-gallery-thumb {
+  border: 2px solid transparent;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+}
+.bh-gallery-thumb.active {
+  border-color: var(--bh-red);
+}
+.bh-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Category tiles */
@@ -468,6 +511,70 @@ body {
 }
 .bh-highlight-row strong {
   text-align: right;
+}
+.bh-saved-product {
+  display: flex;
+  gap: 0.75rem;
+  height: 100%;
+  background: #fff;
+  border: 1px solid var(--bh-gray-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+.bh-saved-product img {
+  width: 76px;
+  height: 76px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--bh-gray-bg);
+  flex: 0 0 auto;
+}
+.bh-order-timeline {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.bh-order-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: #777;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+}
+.bh-order-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #c9c6c1;
+  background: #fff;
+}
+.bh-order-step.complete {
+  color: var(--bh-black);
+}
+.bh-order-step.complete .bh-order-dot {
+  border-color: var(--bh-red);
+  background: var(--bh-red);
+}
+.bh-order-alert {
+  border: 1px solid var(--bh-gray-border);
+  border-left: 4px solid var(--bh-red);
+  border-radius: 6px;
+  padding: 0.75rem;
+  color: #555;
+  background: var(--bh-gray-bg);
+}
+.bh-admin-reply {
+  background: var(--bh-gray-bg);
+  border-left: 3px solid var(--bh-red);
+  border-radius: 4px;
+  color: #555;
+  font-size: 0.85rem;
+  padding: 0.65rem 0.75rem;
 }
 .bh-footer-heading {
   color: var(--bh-red);

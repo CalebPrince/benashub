@@ -37,7 +37,7 @@ PRODUCT_SELECT = """
     SELECT p.*, COALESCE(AVG(r.rating), 0) AS avg_rating, COUNT(r.id) AS review_count
     FROM products p
     JOIN categories c ON p.category_id = c.id
-    LEFT JOIN reviews r ON r.product_id = p.id
+    LEFT JOIN reviews r ON r.product_id = p.id AND r.is_approved = 1
 """
 
 
@@ -56,6 +56,11 @@ def product_to_dict(row):
         "extended_description": row["extended_description"],
         "usage_instructions": row["usage_instructions"],
         "delivery_notes": row["delivery_notes"],
+        "badges": row["badges"],
+        "gallery_images": row["gallery_images"],
+        "bundle_product_ids": row["bundle_product_ids"],
+        "meta_title": row["meta_title"],
+        "meta_description": row["meta_description"],
         "price_pesewas": row["price_pesewas"],
         "stock_qty": row["stock_qty"],
         "ships_internationally": bool(row["ships_internationally"]),
@@ -115,9 +120,9 @@ def list_reviews(slug):
     if product is None:
         return jsonify({"error": "Product not found"}), 404
     rows = db.execute(
-        """SELECT r.rating, r.body, r.created_at, r.customer_id, cu.name AS customer_name
+        """SELECT r.rating, r.body, r.admin_reply, r.created_at, r.customer_id, cu.name AS customer_name
            FROM reviews r JOIN customers cu ON r.customer_id = cu.id
-           WHERE r.product_id = ? ORDER BY r.created_at DESC""",
+           WHERE r.product_id = ? AND r.is_approved = 1 ORDER BY r.is_featured DESC, r.created_at DESC""",
         (product["id"],),
     ).fetchall()
     return jsonify(
@@ -129,6 +134,7 @@ def list_reviews(slug):
                     "is_mine": r["customer_id"] == session.get("customer_id"),
                     "rating": r["rating"],
                     "body": r["body"],
+                    "admin_reply": r["admin_reply"],
                     "created_at": r["created_at"],
                 }
                 for r in rows

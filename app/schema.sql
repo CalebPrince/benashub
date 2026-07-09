@@ -17,6 +17,11 @@ CREATE TABLE products (
     extended_description TEXT,
     usage_instructions TEXT,
     delivery_notes TEXT,
+    badges TEXT,
+    gallery_images TEXT,
+    bundle_product_ids TEXT,
+    meta_title TEXT,
+    meta_description TEXT,
     price_pesewas INTEGER NOT NULL,
     stock_qty INTEGER NOT NULL DEFAULT 0,
     ships_internationally INTEGER NOT NULL DEFAULT 0,
@@ -67,9 +72,20 @@ CREATE TABLE reviews (
     customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
     rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
     body TEXT,
+    is_approved INTEGER NOT NULL DEFAULT 1,
+    is_featured INTEGER NOT NULL DEFAULT 0,
+    admin_reply TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (product_id, customer_id)
+);
+
+CREATE TABLE customer_wishlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (customer_id, product_id)
 );
 
 CREATE TABLE password_resets (

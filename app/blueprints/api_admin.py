@@ -56,7 +56,7 @@ def get_session():
 ADMIN_PRODUCT_SELECT = """
     SELECT p.*, COALESCE(AVG(r.rating), 0) AS avg_rating, COUNT(r.id) AS review_count
     FROM products p
-    LEFT JOIN reviews r ON r.product_id = p.id
+    LEFT JOIN reviews r ON r.product_id = p.id AND r.is_approved = 1
 """
 
 
@@ -70,6 +70,11 @@ def product_admin_dict(row):
         "extended_description": row["extended_description"],
         "usage_instructions": row["usage_instructions"],
         "delivery_notes": row["delivery_notes"],
+        "badges": row["badges"],
+        "gallery_images": row["gallery_images"],
+        "bundle_product_ids": row["bundle_product_ids"],
+        "meta_title": row["meta_title"],
+        "meta_description": row["meta_description"],
         "price_pesewas": row["price_pesewas"],
         "stock_qty": row["stock_qty"],
         "ships_internationally": bool(row["ships_internationally"]),
@@ -101,12 +106,15 @@ def create_product():
         cur = db.execute(
             """INSERT INTO products
                (category_id, name, slug, description, extended_description, usage_instructions,
-                delivery_notes, price_pesewas, stock_qty, ships_internationally, is_active, image_url)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                delivery_notes, badges, gallery_images, bundle_product_ids, meta_title, meta_description,
+                price_pesewas, stock_qty, ships_internationally, is_active, image_url)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 data["category_id"], data["name"], data["slug"], data.get("description", ""),
                 data.get("extended_description", ""), data.get("usage_instructions", ""),
-                data.get("delivery_notes", ""), int(data["price_pesewas"]), int(data.get("stock_qty", 0)),
+                data.get("delivery_notes", ""), data.get("badges", ""), data.get("gallery_images", ""),
+                data.get("bundle_product_ids", ""), data.get("meta_title", ""),
+                data.get("meta_description", ""), int(data["price_pesewas"]), int(data.get("stock_qty", 0)),
                 1 if data.get("ships_internationally") else 0,
                 1 if data.get("is_active", True) else 0,
                 data.get("image_url") or "/static/img/products/placeholder.svg",
@@ -135,12 +143,16 @@ def update_product(product_id):
     try:
         db.execute(
             """UPDATE products SET category_id=?, name=?, slug=?, description=?, extended_description=?,
-               usage_instructions=?, delivery_notes=?, price_pesewas=?, stock_qty=?, ships_internationally=?,
-               is_active=?, image_url=?, updated_at=datetime('now')
+               usage_instructions=?, delivery_notes=?, badges=?, gallery_images=?, bundle_product_ids=?,
+               meta_title=?, meta_description=?, price_pesewas=?, stock_qty=?, ships_internationally=?,
+               is_active=?, image_url=?,
+               updated_at=datetime('now')
                WHERE id=?""",
             (
                 pick("category_id", int), pick("name"), pick("slug"), pick("description"),
                 pick("extended_description"), pick("usage_instructions"), pick("delivery_notes"),
+                pick("badges"), pick("gallery_images"), pick("bundle_product_ids"),
+                pick("meta_title"), pick("meta_description"),
                 pick("price_pesewas", int), pick("stock_qty", int),
                 1 if data.get("ships_internationally", existing["ships_internationally"]) else 0,
                 1 if data.get("is_active", existing["is_active"]) else 0,
@@ -426,6 +438,7 @@ SETTINGS_KEYS = (
     "mail_from_name",
     "mail_from_email",
     "admin_notify_email",
+    "low_stock_threshold",
 )
 
 
@@ -579,11 +592,35 @@ def list_reviews_admin():
             {
                 "id": r["id"], "product_name": r["product_name"], "product_slug": r["product_slug"],
                 "customer_name": r["customer_name"], "customer_email": r["customer_email"],
-                "rating": r["rating"], "body": r["body"], "created_at": r["created_at"],
+                "rating": r["rating"], "body": r["body"], "admin_reply": r["admin_reply"],
+                "is_approved": bool(r["is_approved"]), "is_featured": bool(r["is_featured"]),
+                "created_at": r["created_at"],
             }
             for r in rows
         ]
     )
+
+
+@api_admin_bp.route("/reviews/<int:review_id>", methods=["PUT"])
+@login_required
+def update_review_admin(review_id):
+    data = request.get_json(force=True, silent=True) or {}
+    db = get_db()
+    existing = db.execute("SELECT * FROM reviews WHERE id = ?", (review_id,)).fetchone()
+    if existing is None:
+        return jsonify({"error": "Review not found"}), 404
+    db.execute(
+        """UPDATE reviews SET is_approved=?, is_featured=?, admin_reply=?, updated_at=datetime('now')
+           WHERE id=?""",
+        (
+            1 if data.get("is_approved", existing["is_approved"]) else 0,
+            1 if data.get("is_featured", existing["is_featured"]) else 0,
+            data.get("admin_reply", existing["admin_reply"]) or None,
+            review_id,
+        ),
+    )
+    db.commit()
+    return jsonify({"ok": True})
 
 
 @api_admin_bp.route("/reviews/<int:review_id>", methods=["DELETE"])
@@ -700,6 +737,7 @@ def delete_discount_code(code_id):
 @login_required
 def get_stats():
     db = get_db()
+    low_stock_threshold = int(get_setting(db, "low_stock_threshold", "5") or 5)
     product_count = db.execute("SELECT COUNT(*) AS c FROM products WHERE is_active = 1").fetchone()["c"]
     order_count = db.execute("SELECT COUNT(*) AS c FROM orders").fetchone()["c"]
     pending_count = db.execute(
@@ -712,7 +750,8 @@ def get_stats():
     customer_count = db.execute("SELECT COUNT(*) AS c FROM customers").fetchone()["c"]
 
     low_stock_rows = db.execute(
-        "SELECT id, name, stock_qty FROM products WHERE is_active = 1 AND stock_qty <= 5 ORDER BY stock_qty"
+        "SELECT id, name, stock_qty FROM products WHERE is_active = 1 AND stock_qty <= ? ORDER BY stock_qty",
+        (low_stock_threshold,),
     ).fetchall()
     recent_order_rows = db.execute(
         "SELECT * FROM orders ORDER BY created_at DESC LIMIT 5"
@@ -725,6 +764,7 @@ def get_stats():
             "pending_payment_count": pending_count,
             "revenue_pesewas": revenue,
             "customer_count": customer_count,
+            "low_stock_threshold": low_stock_threshold,
             "low_stock": [{"id": r["id"], "name": r["name"], "stock_qty": r["stock_qty"]} for r in low_stock_rows],
             "recent_orders": [
                 {

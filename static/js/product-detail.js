@@ -21,6 +21,13 @@ BH.productDetail = (() => {
     return `<span class="bh-stars" aria-label="${rating} out of 5">${'★'.repeat(full)}${'☆'.repeat(5 - full)}</span>`;
   }
 
+  function parseList(value) {
+    return (value || '')
+      .split(/[\n,]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
   async function init() {
     const container = document.getElementById('productDetail');
     const notFound = document.getElementById('productNotFound');
@@ -35,13 +42,25 @@ BH.productDetail = (() => {
       return;
     }
 
-    document.title = product.name + ' — Benas Hub';
+    document.title = product.meta_title || (product.name + ' — Benas Hub');
+    setMetaDescription(product.meta_description || product.description || product.extended_description || '');
+
+    const galleryImages = buildGalleryImages(product);
+    const badges = parseList(product.badges);
 
     container.innerHTML = `
       <div class="col-lg-6">
-        <img src="${product.image_url}" class="img-fluid rounded" alt="${escapeHtml(product.name)}">
+        <div class="bh-product-gallery">
+          <img src="${escapeHtml(galleryImages[0])}" class="img-fluid rounded bh-gallery-main" id="productGalleryMain" alt="${escapeHtml(product.name)}">
+          ${galleryImages.length > 1 ? `<div class="bh-gallery-thumbs mt-3">${galleryImages.map((url, index) => `
+            <button type="button" class="bh-gallery-thumb ${index === 0 ? 'active' : ''}" data-image="${escapeHtml(url)}" aria-label="View product image ${index + 1}">
+              <img src="${escapeHtml(url)}" alt="">
+            </button>
+          `).join('')}</div>` : ''}
+        </div>
       </div>
       <div class="col-lg-6">
+        ${badges.length ? `<div class="d-flex flex-wrap gap-2 mb-2">${badges.map((b) => `<span class="badge bh-badge-red">${escapeHtml(b)}</span>`).join('')}</div>` : ''}
         ${product.ships_internationally
           ? '<span class="badge bh-badge-intl mb-2">Ships Internationally</span>'
           : '<span class="badge bg-secondary mb-2">Ghana Only</span>'}
@@ -55,6 +74,7 @@ BH.productDetail = (() => {
         <div class="d-flex align-items-center gap-2 mb-4">
           <input type="number" min="1" value="1" id="qtyInput" class="form-control" style="max-width:100px">
           <button class="btn bh-btn-red" id="addToCartBtn" ${product.stock_qty === 0 ? 'disabled' : ''}>Add to Cart</button>
+          <button class="btn bh-btn-outline-red" id="wishlistBtn">Save</button>
         </div>
         <div class="bh-filter-card">
           <h6 class="mb-2">Check shipping</h6>
@@ -66,12 +86,29 @@ BH.productDetail = (() => {
       </div>
     `;
 
+    wireGallery();
+
     document.getElementById('addToCartBtn').addEventListener('click', () => {
       const qty = Math.max(1, parseInt(document.getElementById('qtyInput').value, 10) || 1);
       BH.cart.addItem(product, qty);
       const btn = document.getElementById('addToCartBtn');
       btn.textContent = 'Added ✓';
       setTimeout(() => { btn.textContent = 'Add to Cart'; }, 1200);
+    });
+    document.getElementById('wishlistBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('wishlistBtn');
+      try {
+        await BH.api.post('/customers/wishlist', { product_id: product.id });
+        btn.textContent = 'Saved';
+        btn.disabled = true;
+      } catch (err) {
+        if (err.status === 401) {
+          window.location.href = '/account/login';
+          return;
+        }
+        btn.textContent = 'Try Again';
+        setTimeout(() => { btn.textContent = 'Save'; }, 1600);
+      }
     });
 
     const countrySelect = document.getElementById('shipCountrySelect');
@@ -89,8 +126,70 @@ BH.productDetail = (() => {
     });
 
     renderProductInfo(product);
+    renderStructuredData(product, galleryImages);
+    await loadBundleProducts(product);
     await loadRelatedProducts(product);
     await initReviews(slug);
+  }
+
+  function buildGalleryImages(product) {
+    const urls = [product.image_url].concat(parseList(product.gallery_images));
+    return [...new Set(urls.filter(Boolean))];
+  }
+
+  function wireGallery() {
+    const main = document.getElementById('productGalleryMain');
+    if (!main) return;
+    document.querySelectorAll('.bh-gallery-thumb').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        main.src = btn.dataset.image;
+        document.querySelectorAll('.bh-gallery-thumb').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  }
+
+  function setMetaDescription(value) {
+    if (!value) return;
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.appendChild(meta);
+    }
+    meta.content = value;
+  }
+
+  function renderStructuredData(product, galleryImages) {
+    const oldScript = document.getElementById('productStructuredData');
+    if (oldScript) oldScript.remove();
+    const data = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      image: galleryImages.map((url) => new URL(url, window.location.origin).href),
+      description: product.meta_description || product.description || product.extended_description || product.name,
+      sku: String(product.id),
+      brand: { '@type': 'Brand', name: 'Benas Hub' },
+      aggregateRating: product.review_count > 0 ? {
+        '@type': 'AggregateRating',
+        ratingValue: product.avg_rating,
+        reviewCount: product.review_count,
+      } : undefined,
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: 'GHS',
+        price: (product.price_pesewas / 100).toFixed(2),
+        availability: product.stock_qty > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        url: window.location.href,
+      },
+    };
+    Object.keys(data).forEach((key) => data[key] === undefined && delete data[key]);
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'productStructuredData';
+    script.textContent = JSON.stringify(data);
+    document.head.appendChild(script);
   }
 
   function renderProductInfo(product) {
@@ -172,6 +271,25 @@ BH.productDetail = (() => {
       BH.products.wireAddToCartButtons(grid, related);
       section.classList.remove('d-none');
     } catch (e) { /* leave related products hidden on failure */ }
+  }
+
+  async function loadBundleProducts(product) {
+    const ids = parseList(product.bundle_product_ids).map((id) => Number(id)).filter(Boolean);
+    if (ids.length === 0) return;
+    const section = document.getElementById('bundleProductsSection');
+    const grid = document.getElementById('bundleProducts');
+    if (!section || !grid) return;
+    try {
+      const products = await BH.api.get('/products');
+      const bundles = ids
+        .map((id) => products.find((p) => p.id === id))
+        .filter(Boolean)
+        .slice(0, 3);
+      if (bundles.length === 0) return;
+      grid.innerHTML = bundles.map(BH.products.productCard).join('');
+      BH.products.wireAddToCartButtons(grid, bundles);
+      section.classList.remove('d-none');
+    } catch (e) { /* leave bundle products hidden on failure */ }
   }
 
   async function initReviews(slug) {
@@ -258,6 +376,7 @@ BH.productDetail = (() => {
           <span class="small text-secondary">${escapeHtml((r.created_at || '').split(' ')[0])}</span>
         </div>
         ${r.body ? `<p class="small mb-0">${escapeHtml(r.body)}</p>` : ''}
+        ${r.admin_reply ? `<div class="bh-admin-reply mt-2"><strong>Benas Hub reply:</strong> ${escapeHtml(r.admin_reply)}</div>` : ''}
       </div>
     `).join('');
 

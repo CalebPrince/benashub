@@ -83,6 +83,15 @@ def init_db(app):
             )"""
         )
         conn.execute(
+            """CREATE TABLE IF NOT EXISTS customer_wishlist (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+                product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE (customer_id, product_id)
+            )"""
+        )
+        conn.execute(
             """CREATE TABLE IF NOT EXISTS password_resets (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
@@ -108,6 +117,23 @@ def init_db(app):
             conn.execute("ALTER TABLE products ADD COLUMN usage_instructions TEXT")
         if "delivery_notes" not in product_columns:
             conn.execute("ALTER TABLE products ADD COLUMN delivery_notes TEXT")
+        if "badges" not in product_columns:
+            conn.execute("ALTER TABLE products ADD COLUMN badges TEXT")
+        if "gallery_images" not in product_columns:
+            conn.execute("ALTER TABLE products ADD COLUMN gallery_images TEXT")
+        if "bundle_product_ids" not in product_columns:
+            conn.execute("ALTER TABLE products ADD COLUMN bundle_product_ids TEXT")
+        if "meta_title" not in product_columns:
+            conn.execute("ALTER TABLE products ADD COLUMN meta_title TEXT")
+        if "meta_description" not in product_columns:
+            conn.execute("ALTER TABLE products ADD COLUMN meta_description TEXT")
+        review_columns = {row["name"] for row in conn.execute("PRAGMA table_info(reviews)")}
+        if "is_approved" not in review_columns:
+            conn.execute("ALTER TABLE reviews ADD COLUMN is_approved INTEGER NOT NULL DEFAULT 1")
+        if "is_featured" not in review_columns:
+            conn.execute("ALTER TABLE reviews ADD COLUMN is_featured INTEGER NOT NULL DEFAULT 0")
+        if "admin_reply" not in review_columns:
+            conn.execute("ALTER TABLE reviews ADD COLUMN admin_reply TEXT")
         conn.commit()
 
     conn.close()

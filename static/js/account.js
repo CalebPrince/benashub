@@ -151,6 +151,7 @@ BH.account = (() => {
     });
 
     await loadOrders();
+    await loadWishlist();
   }
 
   async function loadOrders() {
@@ -171,6 +172,50 @@ BH.account = (() => {
         <td>${formatMoney(o.total_pesewas)}</td>
       </tr>
     `).join('');
+  }
+
+  async function loadWishlist() {
+    const grid = document.getElementById('wishlistGrid');
+    const emptyState = document.getElementById('wishlistEmptyState');
+    if (!grid || !emptyState) return;
+    const items = await BH.api.get('/customers/wishlist');
+    if (items.length === 0) {
+      emptyState.classList.remove('d-none');
+      grid.innerHTML = '';
+      return;
+    }
+    emptyState.classList.add('d-none');
+    grid.innerHTML = items.map((p) => `
+      <div class="col-md-6 col-xl-4">
+        <div class="bh-saved-product">
+          <img src="${p.image_url}" alt="">
+          <div class="flex-grow-1">
+            <a href="/product/${p.slug}" class="bh-product-name">${escapeHtml(p.name)}</a>
+            <div class="bh-product-price small">${formatMoney(p.price_pesewas)}</div>
+            <div class="d-flex gap-2 mt-2">
+              <button class="btn btn-sm bh-btn-red wishlist-cart-btn" data-id="${p.id}">Add to Cart</button>
+              <button class="btn btn-sm btn-outline-danger wishlist-remove-btn" data-id="${p.id}">Remove</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.wishlist-cart-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const product = items.find((p) => p.id === Number(btn.dataset.id));
+        if (product) {
+          BH.cart.addItem(product, 1);
+          btn.textContent = 'Added';
+          setTimeout(() => { btn.textContent = 'Add to Cart'; }, 1200);
+        }
+      });
+    });
+    grid.querySelectorAll('.wishlist-remove-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await BH.api.del('/customers/wishlist/' + btn.dataset.id);
+        await loadWishlist();
+      });
+    });
   }
 
   return { initLogin, initRegister, initDashboard, initForgotPassword, initResetPassword };

@@ -57,6 +57,16 @@
         </div>
       </div>
     </div>
+    <div class="col-12" id="wishlist">
+      <div class="bh-filter-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0">Saved Products</h5>
+          <a href="{{ url_for('pages.catalog') }}" class="bh-inline-link">Shop more</a>
+        </div>
+        <div id="wishlistEmptyState" class="text-secondary small d-none">You haven't saved any products yet.</div>
+        <div id="wishlistGrid" class="row g-3"></div>
+      </div>
+    </div>
   </div>
 </section>
 

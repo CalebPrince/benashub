@@ -17,7 +17,7 @@
   <table class="table align-middle bh-table">
     <thead>
       <tr>
-        <th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th>
+        <th>ID</th><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th>
         <th>Reviews</th><th>Ships Intl.</th><th>Status</th><th></th>
       </tr>
     </thead>
@@ -63,6 +63,29 @@
               <input type="file" class="form-control" id="productImageInput" accept="image/png,image/jpeg,image/webp,image/gif">
               <input type="hidden" name="image_url">
               <img id="productImagePreview" class="bh-image-preview mt-2 d-none" alt="Preview">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Badges</label>
+              <input type="text" class="form-control" name="badges" placeholder="Best Seller, Organic, New">
+              <div class="form-text">Comma-separated labels shown on product cards and product pages.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Gallery Image URLs</label>
+              <textarea class="form-control" name="gallery_images" rows="3" placeholder="/static/img/products/photo-1.webp&#10;/static/img/products/photo-2.webp"></textarea>
+              <div class="form-text">One image URL per line. The main image is always included automatically.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Bundle / Frequently Bought Product IDs</label>
+              <input type="text" class="form-control" name="bundle_product_ids" placeholder="2, 5, 8">
+              <div class="form-text">Comma-separated product IDs. Product IDs are visible in the products table.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">SEO Title</label>
+              <input type="text" class="form-control" name="meta_title" placeholder="Custom search/social title">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">SEO Description</label>
+              <textarea class="form-control" name="meta_description" rows="2" placeholder="Short product description for search results."></textarea>
             </div>
             <div class="col-12">
               <label class="form-label">Description</label>

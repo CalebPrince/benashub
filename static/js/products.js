@@ -14,22 +14,34 @@ BH.products = (() => {
   function productCard(p) {
     const roundedRating = Math.round(p.avg_rating || 0);
     const ratingHtml = '&starf;'.repeat(roundedRating) + '&star;'.repeat(5 - roundedRating);
+    const badges = parseList(p.badges).slice(0, 2);
     return `
       <div class="col-sm-6 col-lg-4">
         <div class="bh-product-card card h-100">
-          <a href="/product/${p.slug}">
+          <a href="/product/${p.slug}" class="position-relative d-block">
             <img src="${p.image_url}" alt="${escapeHtml(p.name)}">
+            ${badges.length ? `<div class="bh-card-badges">${badges.map((b) => `<span>${escapeHtml(b)}</span>`).join('')}</div>` : ''}
           </a>
           <div class="card-body d-flex flex-column">
             ${p.ships_internationally ? '<span class="badge bh-badge-intl mb-2 align-self-start">Ships Internationally</span>' : ''}
             <a href="/product/${p.slug}" class="bh-product-name mb-1">${escapeHtml(p.name)}</a>
             ${p.review_count > 0 ? `<div class="small mb-2"><span class="bh-stars">${ratingHtml}</span> <span class="text-secondary">${p.avg_rating}</span></div>` : ''}
             <div class="bh-product-price mb-3">${formatMoney(p.price_pesewas)}</div>
-            <button class="btn bh-btn-red mt-auto add-to-cart-btn" data-id="${p.id}">Add to Cart</button>
+            <div class="d-grid gap-2 mt-auto">
+              <button class="btn bh-btn-red add-to-cart-btn" data-id="${p.id}">Add to Cart</button>
+              <button class="btn btn-sm bh-btn-outline-red wishlist-btn" data-id="${p.id}">Save for Later</button>
+            </div>
           </div>
         </div>
       </div>
     `;
+  }
+
+  function parseList(value) {
+    return (value || '')
+      .split(/[\n,]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
   }
 
   function wireAddToCartButtons(container, products) {
@@ -40,6 +52,22 @@ BH.products = (() => {
           BH.cart.addItem(product, 1);
           btn.textContent = 'Added ✓';
           setTimeout(() => { btn.textContent = 'Add to Cart'; }, 1200);
+        }
+      });
+    });
+    container.querySelectorAll('.wishlist-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        try {
+          await BH.api.post('/customers/wishlist', { product_id: Number(btn.dataset.id) });
+          btn.textContent = 'Saved';
+          btn.disabled = true;
+        } catch (err) {
+          if (err.status === 401) {
+            window.location.href = '/account/login';
+            return;
+          }
+          btn.textContent = 'Could not save';
+          setTimeout(() => { btn.textContent = 'Save for Later'; }, 1600);
         }
       });
     });

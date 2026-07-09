@@ -15,6 +15,31 @@ BH.orderTracking = (() => {
     return (status || '').replace('_', ' ');
   }
 
+  const TRACKING_STEPS = [
+    { key: 'pending_payment', label: 'Placed' },
+    { key: 'paid', label: 'Paid' },
+    { key: 'processing', label: 'Processing' },
+    { key: 'shipped', label: 'Shipped' },
+    { key: 'completed', label: 'Completed' },
+  ];
+
+  function timelineHtml(status) {
+    if (['payment_failed', 'cancelled'].includes(status)) {
+      return `<div class="bh-order-alert">Order ${escapeHtml(statusLabel(status))}. Please contact us if you need help.</div>`;
+    }
+    const activeIndex = Math.max(0, TRACKING_STEPS.findIndex((step) => step.key === status));
+    return `
+      <div class="bh-order-timeline">
+        ${TRACKING_STEPS.map((step, index) => `
+          <div class="bh-order-step ${index <= activeIndex ? 'complete' : ''}">
+            <span class="bh-order-dot"></span>
+            <span>${escapeHtml(step.label)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
   function init() {
     const form = document.getElementById('trackOrderForm');
     form.addEventListener('submit', async (e) => {
@@ -65,6 +90,8 @@ BH.orderTracking = (() => {
         </div>
         <span class="badge bg-dark text-capitalize">${escapeHtml(statusLabel(order.status))}</span>
       </div>
+      ${timelineHtml(order.status)}
+      <hr>
       ${itemsHtml}
       <hr>
       <div class="d-flex justify-content-between small mb-1"><span>Subtotal</span><span>${formatMoney(order.subtotal_pesewas)}</span></div>

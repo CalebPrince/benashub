@@ -64,6 +64,8 @@ BH.admin = (() => {
     const stats = await BH.api.get('/admin/stats');
     renderStatCards(stats);
     renderRecentOrders(stats.recent_orders);
+    const thresholdText = document.getElementById('lowStockThresholdText');
+    if (thresholdText) thresholdText.textContent = `Alert threshold: ${stats.low_stock_threshold} items or fewer.`;
     renderLowStock(stats.low_stock);
   }
 
@@ -181,6 +183,7 @@ BH.admin = (() => {
       const cat = categories.find((c) => c.id === p.category_id);
       return `
         <tr>
+          <td class="text-secondary small">#${p.id}</td>
           <td><img src="${p.image_url}" class="bh-thumb" alt=""></td>
           <td>${escapeHtml(p.name)}</td>
           <td>${cat ? escapeHtml(cat.name) : ''}</td>
@@ -229,6 +232,11 @@ BH.admin = (() => {
       form.querySelector('select[name="category_id"]').value = product.category_id;
       form.querySelector('input[name="price_ghs"]').value = (product.price_pesewas / 100).toFixed(2);
       form.querySelector('input[name="stock_qty"]').value = product.stock_qty;
+      form.querySelector('input[name="badges"]').value = product.badges || '';
+      form.querySelector('textarea[name="gallery_images"]').value = product.gallery_images || '';
+      form.querySelector('input[name="bundle_product_ids"]').value = product.bundle_product_ids || '';
+      form.querySelector('input[name="meta_title"]').value = product.meta_title || '';
+      form.querySelector('textarea[name="meta_description"]').value = product.meta_description || '';
       form.querySelector('textarea[name="description"]').value = product.description || '';
       form.querySelector('textarea[name="extended_description"]').value = product.extended_description || '';
       form.querySelector('textarea[name="usage_instructions"]').value = product.usage_instructions || '';
@@ -259,6 +267,11 @@ BH.admin = (() => {
       category_id: Number(formData.get('category_id')),
       price_pesewas: Math.round(parseFloat(formData.get('price_ghs')) * 100),
       stock_qty: Number(formData.get('stock_qty')),
+      badges: formData.get('badges'),
+      gallery_images: formData.get('gallery_images'),
+      bundle_product_ids: formData.get('bundle_product_ids'),
+      meta_title: formData.get('meta_title'),
+      meta_description: formData.get('meta_description'),
       description: formData.get('description'),
       extended_description: formData.get('extended_description'),
       usage_instructions: formData.get('usage_instructions'),
@@ -548,12 +561,39 @@ BH.admin = (() => {
         <td><a href="/product/${encodeURIComponent(r.product_slug)}" target="_blank">${escapeHtml(r.product_name)}</a></td>
         <td>${escapeHtml(r.customer_name)}<br><span class="text-secondary small">${escapeHtml(r.customer_email)}</span></td>
         <td><span class="bh-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span></td>
-        <td class="small">${escapeHtml(r.body || '')}</td>
-        <td>${escapeHtml(r.created_at)}</td>
-        <td><button class="btn btn-sm btn-outline-danger delete-review-btn" data-id="${r.id}">Delete</button></td>
+        <td class="small">${escapeHtml(r.body || '')}<br><span class="text-secondary">${escapeHtml(r.created_at)}</span></td>
+        <td>
+          <div class="form-check">
+            <input class="form-check-input review-approved-check" type="checkbox" data-id="${r.id}" ${r.is_approved ? 'checked' : ''}>
+            <label class="form-check-label small">Approved</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input review-featured-check" type="checkbox" data-id="${r.id}" ${r.is_featured ? 'checked' : ''}>
+            <label class="form-check-label small">Featured</label>
+          </div>
+        </td>
+        <td style="min-width:220px">
+          <textarea class="form-control form-control-sm review-reply-input" data-id="${r.id}" rows="2" placeholder="Admin reply">${escapeHtml(r.admin_reply || '')}</textarea>
+        </td>
+        <td class="text-nowrap">
+          <button class="btn btn-sm btn-outline-secondary save-review-btn" data-id="${r.id}">Save</button>
+          <button class="btn btn-sm btn-outline-danger delete-review-btn" data-id="${r.id}">Delete</button>
+        </td>
       </tr>
     `).join('');
 
+    body.querySelectorAll('.save-review-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        await BH.api.put('/admin/reviews/' + id, {
+          is_approved: body.querySelector(`.review-approved-check[data-id="${id}"]`).checked,
+          is_featured: body.querySelector(`.review-featured-check[data-id="${id}"]`).checked,
+          admin_reply: body.querySelector(`.review-reply-input[data-id="${id}"]`).value,
+        });
+        btn.textContent = 'Saved';
+        setTimeout(() => { btn.textContent = 'Save'; }, 1200);
+      });
+    });
     body.querySelectorAll('.delete-review-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!confirm('Delete this review?')) return;
@@ -775,6 +815,7 @@ BH.admin = (() => {
   const SETTINGS_FIELDS = [
     'paystack_secret_key', 'paystack_public_key', 'smtp_host', 'smtp_port', 'smtp_username',
     'smtp_password', 'smtp_encryption', 'mail_from_name', 'mail_from_email', 'admin_notify_email',
+    'low_stock_threshold',
   ];
 
   function wireSettingsTab() {

@@ -140,6 +140,9 @@ def update_product(product_id):
     def pick(key, cast=lambda x: x):
         return cast(data[key]) if key in data and data[key] not in (None, "") else existing[key]
 
+    def pick_text(key):
+        return data[key] if key in data and data[key] is not None else existing[key]
+
     try:
         db.execute(
             """UPDATE products SET category_id=?, name=?, slug=?, description=?, extended_description=?,
@@ -149,10 +152,10 @@ def update_product(product_id):
                updated_at=datetime('now')
                WHERE id=?""",
             (
-                pick("category_id", int), pick("name"), pick("slug"), pick("description"),
-                pick("extended_description"), pick("usage_instructions"), pick("delivery_notes"),
-                pick("badges"), pick("gallery_images"), pick("bundle_product_ids"),
-                pick("meta_title"), pick("meta_description"),
+                pick("category_id", int), pick("name"), pick("slug"), pick_text("description"),
+                pick_text("extended_description"), pick_text("usage_instructions"), pick_text("delivery_notes"),
+                pick_text("badges"), pick_text("gallery_images"), pick_text("bundle_product_ids"),
+                pick_text("meta_title"), pick_text("meta_description"),
                 pick("price_pesewas", int), pick("stock_qty", int),
                 1 if data.get("ships_internationally", existing["ships_internationally"]) else 0,
                 1 if data.get("is_active", existing["is_active"]) else 0,

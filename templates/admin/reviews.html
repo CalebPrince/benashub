@@ -1,0 +1,25 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Reviews &mdash; Benas Hub Admin{% endblock %}
+{% block admin_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="mb-1">Product Reviews</h3>
+    <p class="text-secondary mb-0 small">Read and remove customer reviews shown on product pages.</p>
+  </div>
+</div>
+
+<div id="reviewsEmpty" class="text-secondary d-none">No reviews yet.</div>
+<div class="table-responsive">
+  <table class="table align-middle bh-table">
+    <thead>
+      <tr><th>Product</th><th>Customer</th><th>Rating</th><th>Review</th><th>Date</th><th></th></tr>
+    </thead>
+    <tbody id="adminReviewsTableBody"></tbody>
+  </table>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>document.addEventListener('DOMContentLoaded', () => BH.admin.initReviews());</script>
+{% endblock %}

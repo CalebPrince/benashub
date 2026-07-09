@@ -16,6 +16,55 @@ def generate_order_ref():
     return f"BH-{stamp}-{secrets.token_hex(3).upper()}"
 
 
+def normalize_discount_code(code):
+    return (code or "").strip().upper()
+
+
+def get_discount_for_subtotal(db, code, subtotal):
+    normalized = normalize_discount_code(code)
+    if not normalized:
+        return None, 0, None
+
+    discount = db.execute("SELECT * FROM discount_codes WHERE code = ?", (normalized,)).fetchone()
+    if discount is None or not discount["is_active"]:
+        return None, 0, "Discount code not found"
+    if discount["expires_at"] and discount["expires_at"] < datetime.now(timezone.utc).strftime("%Y-%m-%d"):
+        return None, 0, "Discount code has expired"
+    if discount["max_uses"] is not None and discount["used_count"] >= discount["max_uses"]:
+        return None, 0, "Discount code has reached its usage limit"
+    if subtotal < discount["min_subtotal_pesewas"]:
+        minimum = discount["min_subtotal_pesewas"] / 100
+        return None, 0, f"Discount code requires a subtotal of at least GHS {minimum:.2f}"
+
+    if discount["kind"] == "percent":
+        amount = round(subtotal * discount["value"] / 100)
+    else:
+        amount = discount["value"]
+    return discount, min(amount, subtotal), None
+
+
+@api_orders_bp.route("/discount-codes/validate", methods=["POST"])
+def validate_discount_code():
+    data = request.get_json(force=True, silent=True) or {}
+    try:
+        subtotal = int(data.get("subtotal_pesewas", 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid subtotal"}), 400
+    discount, amount, error = get_discount_for_subtotal(get_db(), data.get("code"), subtotal)
+    if error:
+        return jsonify({"error": error}), 400
+    if discount is None:
+        return jsonify({"error": "Enter a discount code"}), 400
+    return jsonify(
+        {
+            "code": discount["code"],
+            "kind": discount["kind"],
+            "value": discount["value"],
+            "discount_amount_pesewas": amount,
+        }
+    )
+
+
 @api_orders_bp.route("/orders", methods=["POST"])
 def create_order():
     data = request.get_json(force=True, silent=True) or {}
@@ -27,6 +76,7 @@ def create_order():
     shipping_city = (data.get("shipping_city") or "").strip()
     shipping_country = (data.get("shipping_country") or "").strip()
     customer_notes = (data.get("customer_notes") or "").strip()
+    discount_code = normalize_discount_code(data.get("discount_code"))
     items = data.get("items", [])
 
     if not all([customer_name, customer_email, customer_phone, shipping_address, shipping_city, shipping_country]):
@@ -79,8 +129,15 @@ def create_order():
             }
         )
 
+    discount = None
+    discount_amount = 0
+    if discount_code:
+        discount, discount_amount, discount_error = get_discount_for_subtotal(db, discount_code, subtotal)
+        if discount_error:
+            return jsonify({"error": discount_error}), 400
+
     shipping_cost = ship_result["shipping_cost_pesewas"]
-    total = subtotal + shipping_cost
+    total = subtotal - discount_amount + shipping_cost
     order_ref = generate_order_ref()
 
     cur = db.cursor()
@@ -88,12 +145,13 @@ def create_order():
         """INSERT INTO orders
            (order_ref, customer_id, customer_name, customer_email, customer_phone, shipping_address,
             shipping_city, shipping_country, shipping_zone_id, shipping_cost_pesewas, subtotal_pesewas,
-            total_pesewas, status, customer_notes)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment', ?)""",
+            discount_code_id, discount_code, discount_amount_pesewas, total_pesewas, status, customer_notes)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment', ?)""",
         (
             order_ref, session.get("customer_id"), customer_name, customer_email, customer_phone,
             shipping_address, shipping_city, shipping_country, ship_result["zone_id"], shipping_cost,
-            subtotal, total, customer_notes,
+            subtotal, discount["id"] if discount else None, discount["code"] if discount else None,
+            discount_amount, total, customer_notes,
         ),
     )
     order_id = cur.lastrowid
@@ -109,6 +167,8 @@ def create_order():
                 oi["ships_internationally"], oi["qty"], oi["line_total_pesewas"],
             ),
         )
+    if discount:
+        cur.execute("UPDATE discount_codes SET used_count = used_count + 1 WHERE id = ?", (discount["id"],))
     db.commit()
 
     order = {"order_ref": order_ref, "customer_email": customer_email, "total_pesewas": total}
@@ -156,12 +216,57 @@ def get_order(order_ref):
             "shipping_country": order["shipping_country"],
             "shipping_cost_pesewas": order["shipping_cost_pesewas"],
             "subtotal_pesewas": order["subtotal_pesewas"],
+            "discount_code": order["discount_code"],
+            "discount_amount_pesewas": order["discount_amount_pesewas"],
             "total_pesewas": order["total_pesewas"],
             "items": [
                 {
                     "product_name": i["product_name"],
                     "qty": i["qty"],
                     "product_price_pesewas": i["product_price_pesewas"],
+                    "line_total_pesewas": i["line_total_pesewas"],
+                }
+                for i in items
+            ],
+        }
+    )
+
+
+@api_orders_bp.route("/orders/track", methods=["POST"])
+def track_order():
+    data = request.get_json(force=True, silent=True) or {}
+    order_ref = (data.get("order_ref") or "").strip()
+    customer_email = (data.get("customer_email") or "").strip().lower()
+    if not order_ref or not customer_email:
+        return jsonify({"error": "Order reference and email are required"}), 400
+
+    db = get_db()
+    order = db.execute(
+        "SELECT * FROM orders WHERE order_ref = ? AND lower(customer_email) = ?",
+        (order_ref, customer_email),
+    ).fetchone()
+    if order is None:
+        return jsonify({"error": "No order matched that reference and email"}), 404
+
+    items = db.execute("SELECT * FROM order_items WHERE order_id = ?", (order["id"],)).fetchall()
+    return jsonify(
+        {
+            "order_ref": order["order_ref"],
+            "status": order["status"],
+            "customer_name": order["customer_name"],
+            "shipping_city": order["shipping_city"],
+            "shipping_country": order["shipping_country"],
+            "shipping_cost_pesewas": order["shipping_cost_pesewas"],
+            "subtotal_pesewas": order["subtotal_pesewas"],
+            "discount_code": order["discount_code"],
+            "discount_amount_pesewas": order["discount_amount_pesewas"],
+            "total_pesewas": order["total_pesewas"],
+            "created_at": order["created_at"],
+            "updated_at": order["updated_at"],
+            "items": [
+                {
+                    "product_name": i["product_name"],
+                    "qty": i["qty"],
                     "line_total_pesewas": i["line_total_pesewas"],
                 }
                 for i in items

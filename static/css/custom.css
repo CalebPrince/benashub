@@ -204,6 +204,29 @@ body {
   height: 20px;
 }
 
+/* Review stars */
+.bh-stars {
+  color: var(--bh-red);
+  letter-spacing: 2px;
+}
+.bh-star-input {
+  display: flex;
+  gap: 2px;
+}
+.bh-star-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #c9c6c1;
+  cursor: pointer;
+}
+.bh-star-btn:hover,
+.bh-star-btn.selected {
+  color: var(--bh-red);
+}
+
 /* Buttons */
 .bh-btn-red {
   background-color: var(--bh-red);

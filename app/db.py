@@ -57,6 +57,32 @@ def init_db(app):
             )"""
         )
         conn.execute(
+            """CREATE TABLE IF NOT EXISTS reviews (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+                customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+                rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+                body TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE (product_id, customer_id)
+            )"""
+        )
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS discount_codes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code TEXT NOT NULL UNIQUE,
+                kind TEXT NOT NULL CHECK (kind IN ('percent', 'fixed')),
+                value INTEGER NOT NULL,
+                min_subtotal_pesewas INTEGER NOT NULL DEFAULT 0,
+                max_uses INTEGER,
+                used_count INTEGER NOT NULL DEFAULT 0,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                expires_at TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )"""
+        )
+        conn.execute(
             """CREATE TABLE IF NOT EXISTS password_resets (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
@@ -69,6 +95,12 @@ def init_db(app):
         existing_columns = {row["name"] for row in conn.execute("PRAGMA table_info(orders)")}
         if "customer_id" not in existing_columns:
             conn.execute("ALTER TABLE orders ADD COLUMN customer_id INTEGER REFERENCES customers(id)")
+        if "discount_code_id" not in existing_columns:
+            conn.execute("ALTER TABLE orders ADD COLUMN discount_code_id INTEGER REFERENCES discount_codes(id)")
+        if "discount_code" not in existing_columns:
+            conn.execute("ALTER TABLE orders ADD COLUMN discount_code TEXT")
+        if "discount_amount_pesewas" not in existing_columns:
+            conn.execute("ALTER TABLE orders ADD COLUMN discount_amount_pesewas INTEGER NOT NULL DEFAULT 0")
         conn.commit()
 
     conn.close()

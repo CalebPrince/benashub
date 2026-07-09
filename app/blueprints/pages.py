@@ -28,6 +28,11 @@ def checkout():
     return render_template("checkout.html")
 
 
+@pages_bp.route("/track-order")
+def track_order():
+    return render_template("track_order.html")
+
+
 @pages_bp.route("/account/login")
 def account_login():
     if session.get("customer_id"):
@@ -139,6 +144,22 @@ def admin_customers():
     if guard:
         return guard
     return render_template("admin/customers.html", active_page="customers")
+
+
+@pages_bp.route("/admin/reviews")
+def admin_reviews():
+    guard = _require_admin()
+    if guard:
+        return guard
+    return render_template("admin/reviews.html", active_page="reviews")
+
+
+@pages_bp.route("/admin/discount-codes")
+def admin_discount_codes():
+    guard = _require_admin()
+    if guard:
+        return guard
+    return render_template("admin/discount_codes.html", active_page="discount-codes")
 
 
 @pages_bp.route("/admin/shipping-rates")

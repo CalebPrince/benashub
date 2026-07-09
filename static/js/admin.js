@@ -438,6 +438,7 @@ BH.admin = (() => {
       ${itemsHtml}
       <hr>
       <div class="d-flex justify-content-between small mb-1"><span>Subtotal</span><span>${formatMoney(order.subtotal_pesewas)}</span></div>
+      ${order.discount_amount_pesewas ? `<div class="d-flex justify-content-between small mb-1"><span>Discount ${escapeHtml(order.discount_code || '')}</span><span>-${formatMoney(order.discount_amount_pesewas)}</span></div>` : ''}
       <div class="d-flex justify-content-between small mb-1"><span>Shipping</span><span>${formatMoney(order.shipping_cost_pesewas)}</span></div>
       <div class="d-flex justify-content-between fw-bold mb-3"><span>Total</span><span>${formatMoney(order.total_pesewas)}</span></div>
       ${order.customer_notes ? `<p class="small"><strong>Customer notes:</strong> ${escapeHtml(order.customer_notes)}</p>` : ''}
@@ -514,6 +515,154 @@ BH.admin = (() => {
 
     if (!customerModal) customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
     customerModal.show();
+  }
+
+  // ---------- REVIEWS ----------
+
+  async function initReviews() {
+    if (!(await initAdminChrome())) return;
+    await loadAdminReviews();
+  }
+
+  async function loadAdminReviews() {
+    const reviews = await BH.api.get('/admin/reviews');
+    const body = document.getElementById('adminReviewsTableBody');
+    const emptyState = document.getElementById('reviewsEmpty');
+
+    if (reviews.length === 0) {
+      emptyState.classList.remove('d-none');
+      body.innerHTML = '';
+      return;
+    }
+
+    emptyState.classList.add('d-none');
+    body.innerHTML = reviews.map((r) => `
+      <tr>
+        <td><a href="/product/${encodeURIComponent(r.product_slug)}" target="_blank">${escapeHtml(r.product_name)}</a></td>
+        <td>${escapeHtml(r.customer_name)}<br><span class="text-secondary small">${escapeHtml(r.customer_email)}</span></td>
+        <td><span class="bh-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span></td>
+        <td class="small">${escapeHtml(r.body || '')}</td>
+        <td>${escapeHtml(r.created_at)}</td>
+        <td><button class="btn btn-sm btn-outline-danger delete-review-btn" data-id="${r.id}">Delete</button></td>
+      </tr>
+    `).join('');
+
+    body.querySelectorAll('.delete-review-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this review?')) return;
+        await BH.api.del('/admin/reviews/' + btn.dataset.id);
+        await loadAdminReviews();
+      });
+    });
+  }
+
+  // ---------- DISCOUNT CODES ----------
+
+  let currentDiscountCodes = [];
+  let discountCodeModal;
+
+  async function initDiscountCodes() {
+    if (!(await initAdminChrome())) return;
+    wireDiscountCodesTab();
+    await loadDiscountCodes();
+  }
+
+  function wireDiscountCodesTab() {
+    document.getElementById('addDiscountCodeBtn').addEventListener('click', () => openDiscountCodeModal());
+    document.getElementById('discountCodeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveDiscountCode(e.target);
+    });
+  }
+
+  async function loadDiscountCodes() {
+    currentDiscountCodes = await BH.api.get('/admin/discount-codes');
+    const body = document.getElementById('discountCodesTableBody');
+    body.innerHTML = currentDiscountCodes.map((c) => `
+      <tr>
+        <td><strong>${escapeHtml(c.code)}</strong></td>
+        <td>${c.kind === 'percent' ? c.value + '%' : formatMoney(c.value)}</td>
+        <td>${formatMoney(c.min_subtotal_pesewas)}</td>
+        <td>${c.used_count}${c.max_uses ? ' / ' + c.max_uses : ''}</td>
+        <td>${escapeHtml(c.expires_at || 'Never')}</td>
+        <td>${c.is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</td>
+        <td class="text-nowrap">
+          <button class="btn btn-sm btn-outline-secondary edit-discount-code-btn" data-id="${c.id}">Edit</button>
+          <button class="btn btn-sm btn-outline-danger delete-discount-code-btn" data-id="${c.id}">Deactivate</button>
+        </td>
+      </tr>
+    `).join('');
+
+    body.querySelectorAll('.edit-discount-code-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const code = currentDiscountCodes.find((c) => c.id === Number(btn.dataset.id));
+        openDiscountCodeModal(code);
+      });
+    });
+    body.querySelectorAll('.delete-discount-code-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Deactivate this discount code?')) return;
+        await BH.api.del('/admin/discount-codes/' + btn.dataset.id);
+        await loadDiscountCodes();
+      });
+    });
+  }
+
+  function openDiscountCodeModal(code) {
+    const form = document.getElementById('discountCodeForm');
+    form.reset();
+    document.getElementById('discountCodeFormError').classList.add('d-none');
+    document.getElementById('discountCodeModalTitle').textContent = code ? 'Edit Discount Code' : 'Add Discount Code';
+    form.querySelector('input[name="id"]').value = code ? code.id : '';
+
+    if (code) {
+      form.querySelector('input[name="code"]').value = code.code;
+      form.querySelector('select[name="kind"]').value = code.kind;
+      form.querySelector('input[name="value"]').value =
+        code.kind === 'fixed' ? (code.value / 100).toFixed(2) : code.value;
+      form.querySelector('input[name="min_subtotal_ghs"]').value = (code.min_subtotal_pesewas / 100).toFixed(2);
+      form.querySelector('input[name="max_uses"]').value = code.max_uses || '';
+      form.querySelector('input[name="expires_at"]').value = code.expires_at || '';
+      form.querySelector('input[name="is_active"]').checked = code.is_active;
+    } else {
+      form.querySelector('input[name="is_active"]').checked = true;
+      form.querySelector('select[name="kind"]').value = 'percent';
+      form.querySelector('input[name="min_subtotal_ghs"]').value = '0';
+    }
+
+    if (!discountCodeModal) discountCodeModal = new bootstrap.Modal(document.getElementById('discountCodeModal'));
+    discountCodeModal.show();
+  }
+
+  async function saveDiscountCode(form) {
+    const errorEl = document.getElementById('discountCodeFormError');
+    errorEl.classList.add('d-none');
+    const formData = new FormData(form);
+    const id = formData.get('id');
+    const payload = {
+      code: formData.get('code'),
+      kind: formData.get('kind'),
+      value: formData.get('kind') === 'fixed'
+        ? Math.round(parseFloat(formData.get('value') || '0') * 100)
+        : Number(formData.get('value')),
+      min_subtotal_pesewas: Math.round(parseFloat(formData.get('min_subtotal_ghs') || '0') * 100),
+      max_uses: formData.get('max_uses'),
+      expires_at: formData.get('expires_at'),
+      is_active: form.querySelector('input[name="is_active"]').checked,
+    };
+
+    try {
+      if (id) {
+        await BH.api.put('/admin/discount-codes/' + id, payload);
+      } else {
+        await BH.api.post('/admin/discount-codes', payload);
+      }
+      discountCodeModal.hide();
+      await loadDiscountCodes();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.classList.remove('d-none');
+    }
   }
 
   // ---------- SHIPPING RATES ----------
@@ -681,6 +830,6 @@ BH.admin = (() => {
 
   return {
     initLogin, initOverview, initProducts, initCategories, initOrders,
-    initCustomers, initShippingRates, initSettings,
+    initCustomers, initReviews, initDiscountCodes, initShippingRates, initSettings,
   };
 })();

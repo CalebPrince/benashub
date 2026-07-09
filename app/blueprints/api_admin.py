@@ -282,7 +282,8 @@ def get_order_admin(order_id):
             "customer_email": order["customer_email"], "customer_phone": order["customer_phone"],
             "shipping_address": order["shipping_address"], "shipping_city": order["shipping_city"],
             "shipping_country": order["shipping_country"], "shipping_cost_pesewas": order["shipping_cost_pesewas"],
-            "subtotal_pesewas": order["subtotal_pesewas"], "total_pesewas": order["total_pesewas"],
+            "subtotal_pesewas": order["subtotal_pesewas"], "discount_code": order["discount_code"],
+            "discount_amount_pesewas": order["discount_amount_pesewas"], "total_pesewas": order["total_pesewas"],
             "status": order["status"], "customer_notes": order["customer_notes"],
             "admin_notes": order["admin_notes"], "created_at": order["created_at"],
             "items": [
@@ -489,6 +490,140 @@ def get_customer_admin(customer_id):
             ],
         }
     )
+
+
+# --- product reviews ---
+
+@api_admin_bp.route("/reviews", methods=["GET"])
+@login_required
+def list_reviews_admin():
+    db = get_db()
+    rows = db.execute(
+        """SELECT r.*, p.name AS product_name, p.slug AS product_slug, c.name AS customer_name,
+                  c.email AS customer_email
+           FROM reviews r
+           JOIN products p ON p.id = r.product_id
+           JOIN customers c ON c.id = r.customer_id
+           ORDER BY r.created_at DESC"""
+    ).fetchall()
+    return jsonify(
+        [
+            {
+                "id": r["id"], "product_name": r["product_name"], "product_slug": r["product_slug"],
+                "customer_name": r["customer_name"], "customer_email": r["customer_email"],
+                "rating": r["rating"], "body": r["body"], "created_at": r["created_at"],
+            }
+            for r in rows
+        ]
+    )
+
+
+@api_admin_bp.route("/reviews/<int:review_id>", methods=["DELETE"])
+@login_required
+def delete_review_admin(review_id):
+    db = get_db()
+    db.execute("DELETE FROM reviews WHERE id = ?", (review_id,))
+    db.commit()
+    return jsonify({"ok": True})
+
+
+# --- discount codes ---
+
+def discount_code_dict(row):
+    return {
+        "id": row["id"], "code": row["code"], "kind": row["kind"], "value": row["value"],
+        "min_subtotal_pesewas": row["min_subtotal_pesewas"], "max_uses": row["max_uses"],
+        "used_count": row["used_count"], "is_active": bool(row["is_active"]),
+        "expires_at": row["expires_at"], "created_at": row["created_at"],
+    }
+
+
+@api_admin_bp.route("/discount-codes", methods=["GET"])
+@login_required
+def list_discount_codes():
+    db = get_db()
+    rows = db.execute("SELECT * FROM discount_codes ORDER BY created_at DESC").fetchall()
+    return jsonify([discount_code_dict(r) for r in rows])
+
+
+@api_admin_bp.route("/discount-codes", methods=["POST"])
+@login_required
+def create_discount_code():
+    data = request.get_json(force=True, silent=True) or {}
+    code = (data.get("code") or "").strip().upper()
+    kind = data.get("kind")
+    if not code or kind not in ("percent", "fixed"):
+        return jsonify({"error": "Code and discount type are required"}), 400
+
+    value = int(data.get("value") or 0)
+    if value <= 0:
+        return jsonify({"error": "Discount value must be greater than zero"}), 400
+    if kind == "percent" and value > 100:
+        return jsonify({"error": "Percent discounts cannot exceed 100"}), 400
+
+    max_uses = data.get("max_uses")
+    max_uses = int(max_uses) if max_uses not in (None, "") else None
+    db = get_db()
+    try:
+        cur = db.execute(
+            """INSERT INTO discount_codes
+               (code, kind, value, min_subtotal_pesewas, max_uses, is_active, expires_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (
+                code, kind, value, int(data.get("min_subtotal_pesewas") or 0), max_uses,
+                1 if data.get("is_active", True) else 0, data.get("expires_at") or None,
+            ),
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "A discount code with that name already exists"}), 400
+    row = db.execute("SELECT * FROM discount_codes WHERE id = ?", (cur.lastrowid,)).fetchone()
+    return jsonify(discount_code_dict(row)), 201
+
+
+@api_admin_bp.route("/discount-codes/<int:code_id>", methods=["PUT"])
+@login_required
+def update_discount_code(code_id):
+    data = request.get_json(force=True, silent=True) or {}
+    db = get_db()
+    existing = db.execute("SELECT * FROM discount_codes WHERE id = ?", (code_id,)).fetchone()
+    if existing is None:
+        return jsonify({"error": "Discount code not found"}), 404
+
+    code = (data.get("code", existing["code"]) or "").strip().upper()
+    kind = data.get("kind", existing["kind"])
+    value = int(data.get("value", existing["value"]) or 0)
+    if not code or kind not in ("percent", "fixed") or value <= 0:
+        return jsonify({"error": "Enter a valid code, type, and value"}), 400
+    if kind == "percent" and value > 100:
+        return jsonify({"error": "Percent discounts cannot exceed 100"}), 400
+
+    max_uses = data.get("max_uses", existing["max_uses"])
+    max_uses = int(max_uses) if max_uses not in (None, "") else None
+    try:
+        db.execute(
+            """UPDATE discount_codes SET code=?, kind=?, value=?, min_subtotal_pesewas=?,
+               max_uses=?, is_active=?, expires_at=? WHERE id=?""",
+            (
+                code, kind, value, int(data.get("min_subtotal_pesewas", existing["min_subtotal_pesewas"]) or 0),
+                max_uses, 1 if data.get("is_active", existing["is_active"]) else 0,
+                data.get("expires_at") or None, code_id,
+            ),
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "A discount code with that name already exists"}), 400
+    row = db.execute("SELECT * FROM discount_codes WHERE id = ?", (code_id,)).fetchone()
+    return jsonify(discount_code_dict(row))
+
+
+@api_admin_bp.route("/discount-codes/<int:code_id>", methods=["DELETE"])
+@login_required
+def delete_discount_code(code_id):
+    db = get_db()
+    db.execute("UPDATE discount_codes SET is_active = 0 WHERE id = ?", (code_id,))
+    db.commit()
+    return jsonify({"ok": True})
 
 
 # --- dashboard stats ---

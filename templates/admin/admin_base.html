@@ -20,6 +20,8 @@
         <a class="bh-sidebar-link {{ 'active' if active_page == 'categories' else '' }}" href="{{ url_for('pages.admin_categories') }}">Categories</a>
         <a class="bh-sidebar-link {{ 'active' if active_page == 'orders' else '' }}" href="{{ url_for('pages.admin_orders') }}">Orders</a>
         <a class="bh-sidebar-link {{ 'active' if active_page == 'customers' else '' }}" href="{{ url_for('pages.admin_customers') }}">Customers</a>
+        <a class="bh-sidebar-link {{ 'active' if active_page == 'reviews' else '' }}" href="{{ url_for('pages.admin_reviews') }}">Reviews</a>
+        <a class="bh-sidebar-link {{ 'active' if active_page == 'discount-codes' else '' }}" href="{{ url_for('pages.admin_discount_codes') }}">Discount Codes</a>
         <a class="bh-sidebar-link {{ 'active' if active_page == 'shipping-rates' else '' }}" href="{{ url_for('pages.admin_shipping_rates') }}">Shipping Rates</a>
         <a class="bh-sidebar-link {{ 'active' if active_page == 'settings' else '' }}" href="{{ url_for('pages.admin_settings') }}">Settings</a>
       </nav>

@@ -77,6 +77,12 @@ def seed(conn, config):
             (zone_name, zone_type, json.dumps(countries), base, per_item),
         )
 
+    cur.execute(
+        """INSERT INTO discount_codes
+           (code, kind, value, min_subtotal_pesewas, max_uses, is_active)
+           VALUES ('WELCOME10', 'percent', 10, 5000, 100, 1)"""
+    )
+
     admin_username = config.get("ADMIN_USERNAME", "admin")
     admin_password = config.get("ADMIN_PASSWORD")
     generated = False

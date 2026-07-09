@@ -45,6 +45,30 @@ CREATE TABLE customers (
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE discount_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    kind TEXT NOT NULL CHECK (kind IN ('percent', 'fixed')),
+    value INTEGER NOT NULL,
+    min_subtotal_pesewas INTEGER NOT NULL DEFAULT 0,
+    max_uses INTEGER,
+    used_count INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    expires_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    body TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (product_id, customer_id)
+);
+
 CREATE TABLE password_resets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
@@ -67,6 +91,9 @@ CREATE TABLE orders (
     shipping_zone_id INTEGER REFERENCES shipping_rates(id),
     shipping_cost_pesewas INTEGER NOT NULL,
     subtotal_pesewas INTEGER NOT NULL,
+    discount_code_id INTEGER REFERENCES discount_codes(id),
+    discount_code TEXT,
+    discount_amount_pesewas INTEGER NOT NULL DEFAULT 0,
     total_pesewas INTEGER NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending_payment',
     customer_notes TEXT,

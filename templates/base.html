@@ -50,6 +50,7 @@
           <ul class="navbar-nav me-auto mb-3 mb-lg-0">
             <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.index') }}">Home</a></li>
             <li class="nav-item" id="navShopItem"><a class="nav-link" href="{{ url_for('pages.catalog') }}">Shop</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('pages.track_order') }}">Track Order</a></li>
             <li class="nav-item d-lg-none" id="navAccountItem">
               <a class="nav-link" href="{{ url_for('pages.account_login') }}" id="navAccountLink">Login</a>
             </li>
@@ -92,6 +93,7 @@
           <h6 class="text-uppercase bh-footer-heading">Shop</h6>
           <p class="small mb-1"><a href="{{ url_for('pages.catalog') }}" class="bh-footer-link">All Products</a></p>
           <p class="small mb-1"><a href="{{ url_for('pages.cart') }}" class="bh-footer-link">Cart</a></p>
+          <p class="small mb-1"><a href="{{ url_for('pages.track_order') }}" class="bh-footer-link">Track Order</a></p>
           <p class="small mb-0"><a href="{{ url_for('pages.account_login') }}" class="bh-footer-link">My Account</a></p>
         </div>
         <div class="col-lg-3 col-md-6">

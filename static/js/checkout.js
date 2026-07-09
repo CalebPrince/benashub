@@ -12,6 +12,7 @@ BH.checkout = (() => {
   }
 
   let currentShipping = null;
+  let currentDiscount = null;
 
   async function init() {
     const params = new URLSearchParams(window.location.search);
@@ -34,6 +35,10 @@ BH.checkout = (() => {
     await BH.shipping.populateCountrySelect(document.getElementById('shippingCountrySelect'));
 
     document.getElementById('shippingCountrySelect').addEventListener('change', () => refreshShipping(items));
+    document.getElementById('discountCodeForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      applyDiscountCode();
+    });
 
     document.getElementById('checkoutFormEl').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -104,7 +109,46 @@ BH.checkout = (() => {
   function updateTotal() {
     const subtotal = BH.cart.getSubtotalPesewas();
     const shippingCost = (currentShipping && currentShipping.deliverable) ? currentShipping.shipping_cost_pesewas : 0;
-    document.getElementById('checkoutTotal').textContent = formatMoney(subtotal + shippingCost);
+    const discountAmount = currentDiscount ? currentDiscount.discount_amount_pesewas : 0;
+    document.getElementById('checkoutTotal').textContent = formatMoney(subtotal - discountAmount + shippingCost);
+  }
+
+  async function applyDiscountCode() {
+    const input = document.getElementById('discountCodeInput');
+    const message = document.getElementById('discountCodeMessage');
+    const code = input.value.trim().toUpperCase();
+    currentDiscount = null;
+    renderDiscount();
+    message.classList.add('d-none');
+    updateTotal();
+
+    if (!code) return;
+
+    try {
+      currentDiscount = await BH.api.post('/discount-codes/validate', {
+        code,
+        subtotal_pesewas: BH.cart.getSubtotalPesewas(),
+      });
+      input.value = currentDiscount.code;
+      message.textContent = 'Discount applied.';
+      message.className = 'small mt-2 text-success';
+      renderDiscount();
+    } catch (err) {
+      message.textContent = err.message || 'Could not apply that code.';
+      message.className = 'small mt-2 text-danger';
+    }
+    updateTotal();
+  }
+
+  function renderDiscount() {
+    const row = document.getElementById('checkoutDiscountRow');
+    if (!currentDiscount) {
+      row.classList.add('d-none');
+      return;
+    }
+    document.getElementById('checkoutDiscountCode').textContent = '(' + currentDiscount.code + ')';
+    document.getElementById('checkoutDiscount').textContent = '-' + formatMoney(currentDiscount.discount_amount_pesewas);
+    row.classList.remove('d-none');
   }
 
   async function submitOrder(items) {
@@ -127,6 +171,7 @@ BH.checkout = (() => {
       shipping_city: formData.get('shipping_city'),
       shipping_country: formData.get('shipping_country'),
       customer_notes: formData.get('customer_notes'),
+      discount_code: currentDiscount ? currentDiscount.code : '',
       items: items.map((i) => ({ product_id: i.product_id, qty: i.qty })),
     };
 
@@ -184,6 +229,7 @@ BH.checkout = (() => {
       ${itemsHtml}
       <hr>
       <div class="d-flex justify-content-between small mb-1"><span>Subtotal</span><span>${formatMoney(order.subtotal_pesewas)}</span></div>
+      ${order.discount_amount_pesewas ? `<div class="d-flex justify-content-between small mb-1"><span>Discount ${escapeHtml(order.discount_code || '')}</span><span>-${formatMoney(order.discount_amount_pesewas)}</span></div>` : ''}
       <div class="d-flex justify-content-between small mb-1"><span>Shipping</span><span>${formatMoney(order.shipping_cost_pesewas)}</span></div>
       <div class="d-flex justify-content-between fw-bold"><span>Total</span><span>${formatMoney(order.total_pesewas)}</span></div>
       <hr>

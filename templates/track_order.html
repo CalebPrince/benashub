@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Track Order &mdash; Benas Hub{% endblock %}
+{% block content %}
+
+<section class="bh-page-header">
+  <div class="container py-4">
+    <h1 class="bh-page-title">Track Order</h1>
+  </div>
+</section>
+
+<section class="container py-4">
+  <div class="row g-4 justify-content-center">
+    <div class="col-lg-5">
+      <div class="bh-filter-card">
+        <form id="trackOrderForm" novalidate>
+          <div id="trackOrderError" class="alert alert-danger d-none"></div>
+          <div class="mb-3">
+            <label class="form-label">Order Reference</label>
+            <input type="text" class="form-control" name="order_ref" placeholder="BH-YYYYMMDD-XXXXXX" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-control" name="customer_email" required>
+          </div>
+          <button type="submit" class="btn bh-btn-red w-100" id="trackOrderBtn">Find Order</button>
+        </form>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div id="trackOrderResult" class="bh-summary-card d-none"></div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/order-tracking.js') }}"></script>
+<script>document.addEventListener('DOMContentLoaded', () => BH.orderTracking.init());</script>
+{% endblock %}

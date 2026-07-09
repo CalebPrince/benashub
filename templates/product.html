@@ -5,6 +5,38 @@
 <section class="container py-5">
   <div id="productDetail" class="row g-5"></div>
 
+  <div id="productReviews" class="mt-5 d-none">
+    <h3 class="bh-section-title mb-4">Reviews <span id="reviewsSummary" class="fs-6 text-secondary fw-normal"></span></h3>
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div id="reviewsList"></div>
+        <p id="reviewsEmptyState" class="text-secondary d-none">No reviews yet &mdash; be the first to review this product.</p>
+      </div>
+      <div class="col-lg-5">
+        <div class="bh-filter-card">
+          <h6 class="mb-3" id="reviewFormTitle">Write a Review</h6>
+          <div id="reviewLoginPrompt" class="small text-secondary d-none">
+            <a href="{{ url_for('pages.account_login') }}">Log in</a> or
+            <a href="{{ url_for('pages.account_register') }}">create an account</a> to write a review.
+          </div>
+          <form id="reviewForm" class="d-none">
+            <div id="reviewError" class="alert alert-danger d-none"></div>
+            <div id="reviewSaved" class="alert alert-success d-none">Thanks for your review!</div>
+            <div class="mb-3">
+              <label class="form-label">Your Rating</label>
+              <div id="reviewStarsInput" class="bh-star-input" role="radiogroup" aria-label="Rating"></div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Your Review (optional)</label>
+              <textarea class="form-control" name="body" rows="3" maxlength="2000" placeholder="What did you think of this product?"></textarea>
+            </div>
+            <button type="submit" class="btn bh-btn-red">Submit Review</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="productNotFound" class="text-center text-secondary py-5 d-none">
     <p>Sorry, this product could not be found.</p>
     <a href="{{ url_for('pages.catalog') }}" class="btn bh-btn-red">Back to Shop</a>

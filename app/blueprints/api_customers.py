@@ -61,6 +61,9 @@ def login():
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
 
+    if not EMAIL_RE.match(email):
+        return jsonify({"error": "Enter your email address to log in"}), 400
+
     db = get_db()
     row = db.execute("SELECT * FROM customers WHERE email = ?", (email,)).fetchone()
     if row is None or not check_password_hash(row["password_hash"], password):

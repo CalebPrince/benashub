@@ -20,11 +20,16 @@ api_admin_bp = Blueprint("api_admin", __name__)
 @api_admin_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json(force=True, silent=True) or {}
-    username = data.get("username", "")
+    username = (data.get("username") or "").strip()
     password = data.get("password", "")
 
     db = get_db()
-    user = db.execute("SELECT * FROM admin_users WHERE username = ?", (username,)).fetchone()
+    user = db.execute(
+        """SELECT * FROM admin_users
+           WHERE lower(username) = lower(?)
+              OR (instr(username, '@') > 0 AND lower(substr(username, 1, instr(username, '@') - 1)) = lower(?))""",
+        (username, username),
+    ).fetchone()
     if user is None or not check_password_hash(user["password_hash"], password):
         return jsonify({"error": "Invalid username or password"}), 401
 

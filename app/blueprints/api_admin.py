@@ -53,6 +53,13 @@ def get_session():
 
 # --- products ---
 
+ADMIN_PRODUCT_SELECT = """
+    SELECT p.*, COALESCE(AVG(r.rating), 0) AS avg_rating, COUNT(r.id) AS review_count
+    FROM products p
+    LEFT JOIN reviews r ON r.product_id = p.id
+"""
+
+
 def product_admin_dict(row):
     return {
         "id": row["id"],
@@ -60,11 +67,16 @@ def product_admin_dict(row):
         "name": row["name"],
         "slug": row["slug"],
         "description": row["description"],
+        "extended_description": row["extended_description"],
+        "usage_instructions": row["usage_instructions"],
+        "delivery_notes": row["delivery_notes"],
         "price_pesewas": row["price_pesewas"],
         "stock_qty": row["stock_qty"],
         "ships_internationally": bool(row["ships_internationally"]),
         "is_active": bool(row["is_active"]),
         "image_url": row["image_url"],
+        "avg_rating": round(row["avg_rating"], 1),
+        "review_count": row["review_count"],
     }
 
 
@@ -72,7 +84,7 @@ def product_admin_dict(row):
 @login_required
 def list_products():
     db = get_db()
-    rows = db.execute("SELECT * FROM products ORDER BY created_at DESC").fetchall()
+    rows = db.execute(ADMIN_PRODUCT_SELECT + " GROUP BY p.id ORDER BY p.created_at DESC").fetchall()
     return jsonify([product_admin_dict(r) for r in rows])
 
 
@@ -88,12 +100,13 @@ def create_product():
     try:
         cur = db.execute(
             """INSERT INTO products
-               (category_id, name, slug, description, price_pesewas, stock_qty, ships_internationally,
-                is_active, image_url)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               (category_id, name, slug, description, extended_description, usage_instructions,
+                delivery_notes, price_pesewas, stock_qty, ships_internationally, is_active, image_url)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 data["category_id"], data["name"], data["slug"], data.get("description", ""),
-                int(data["price_pesewas"]), int(data.get("stock_qty", 0)),
+                data.get("extended_description", ""), data.get("usage_instructions", ""),
+                data.get("delivery_notes", ""), int(data["price_pesewas"]), int(data.get("stock_qty", 0)),
                 1 if data.get("ships_internationally") else 0,
                 1 if data.get("is_active", True) else 0,
                 data.get("image_url") or "/static/img/products/placeholder.svg",
@@ -103,7 +116,7 @@ def create_product():
     except sqlite3.IntegrityError:
         return jsonify({"error": "A product with that slug already exists"}), 400
 
-    row = db.execute("SELECT * FROM products WHERE id = ?", (cur.lastrowid,)).fetchone()
+    row = db.execute(ADMIN_PRODUCT_SELECT + " WHERE p.id = ? GROUP BY p.id", (cur.lastrowid,)).fetchone()
     return jsonify(product_admin_dict(row)), 201
 
 
@@ -121,11 +134,13 @@ def update_product(product_id):
 
     try:
         db.execute(
-            """UPDATE products SET category_id=?, name=?, slug=?, description=?, price_pesewas=?,
-               stock_qty=?, ships_internationally=?, is_active=?, image_url=?, updated_at=datetime('now')
+            """UPDATE products SET category_id=?, name=?, slug=?, description=?, extended_description=?,
+               usage_instructions=?, delivery_notes=?, price_pesewas=?, stock_qty=?, ships_internationally=?,
+               is_active=?, image_url=?, updated_at=datetime('now')
                WHERE id=?""",
             (
                 pick("category_id", int), pick("name"), pick("slug"), pick("description"),
+                pick("extended_description"), pick("usage_instructions"), pick("delivery_notes"),
                 pick("price_pesewas", int), pick("stock_qty", int),
                 1 if data.get("ships_internationally", existing["ships_internationally"]) else 0,
                 1 if data.get("is_active", existing["is_active"]) else 0,
@@ -136,7 +151,7 @@ def update_product(product_id):
     except sqlite3.IntegrityError:
         return jsonify({"error": "A product with that slug already exists"}), 400
 
-    row = db.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
+    row = db.execute(ADMIN_PRODUCT_SELECT + " WHERE p.id = ? GROUP BY p.id", (product_id,)).fetchone()
     return jsonify(product_admin_dict(row))
 
 

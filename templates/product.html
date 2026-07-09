@@ -5,6 +5,37 @@
 <section class="container py-5">
   <div id="productDetail" class="row g-5"></div>
 
+  <div id="productInfoSections" class="mt-5 d-none">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="bh-summary-card">
+          <ul class="nav nav-tabs bh-product-tabs" id="productInfoTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#descriptionPanel" type="button" role="tab">Description</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="usage-tab" data-bs-toggle="tab" data-bs-target="#usagePanel" type="button" role="tab">How to Use</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="delivery-tab" data-bs-toggle="tab" data-bs-target="#deliveryPanel" type="button" role="tab">Delivery</button>
+            </li>
+          </ul>
+          <div class="tab-content pt-4">
+            <div class="tab-pane fade show active" id="descriptionPanel" role="tabpanel"></div>
+            <div class="tab-pane fade" id="usagePanel" role="tabpanel"></div>
+            <div class="tab-pane fade" id="deliveryPanel" role="tabpanel"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="bh-filter-card h-100">
+          <h5 class="mb-3">Product Highlights</h5>
+          <div id="productHighlights"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="productReviews" class="mt-5 d-none">
     <h3 class="bh-section-title mb-4">Reviews <span id="reviewsSummary" class="fs-6 text-secondary fw-normal"></span></h3>
     <div class="row g-4">
@@ -37,6 +68,14 @@
     </div>
   </div>
 
+  <div id="relatedProductsSection" class="mt-5 d-none">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <h3 class="bh-section-title mb-0">Related Products</h3>
+      <a href="{{ url_for('pages.catalog') }}" class="bh-inline-link">View all</a>
+    </div>
+    <div id="relatedProducts" class="row g-4"></div>
+  </div>
+
   <div id="productNotFound" class="text-center text-secondary py-5 d-none">
     <p>Sorry, this product could not be found.</p>
     <a href="{{ url_for('pages.catalog') }}" class="btn bh-btn-red">Back to Shop</a>
@@ -46,6 +85,7 @@
 {% endblock %}
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/shipping.js') }}"></script>
+<script src="{{ url_for('static', filename='js/products.js') }}"></script>
 <script src="{{ url_for('static', filename='js/product-detail.js') }}"></script>
 <script>document.addEventListener('DOMContentLoaded', () => BH.productDetail.init());</script>
 {% endblock %}

@@ -12,6 +12,8 @@ BH.products = (() => {
   }
 
   function productCard(p) {
+    const roundedRating = Math.round(p.avg_rating || 0);
+    const ratingHtml = '&starf;'.repeat(roundedRating) + '&star;'.repeat(5 - roundedRating);
     return `
       <div class="col-sm-6 col-lg-4">
         <div class="bh-product-card card h-100">
@@ -21,6 +23,7 @@ BH.products = (() => {
           <div class="card-body d-flex flex-column">
             ${p.ships_internationally ? '<span class="badge bh-badge-intl mb-2 align-self-start">Ships Internationally</span>' : ''}
             <a href="/product/${p.slug}" class="bh-product-name mb-1">${escapeHtml(p.name)}</a>
+            ${p.review_count > 0 ? `<div class="small mb-2"><span class="bh-stars">${ratingHtml}</span> <span class="text-secondary">${p.avg_rating}</span></div>` : ''}
             <div class="bh-product-price mb-3">${formatMoney(p.price_pesewas)}</div>
             <button class="btn bh-btn-red mt-auto add-to-cart-btn" data-id="${p.id}">Add to Cart</button>
           </div>
@@ -60,6 +63,25 @@ BH.products = (() => {
       const list = products.slice(0, 6);
       featured.innerHTML = list.map(productCard).join('');
       wireAddToCartButtons(featured, list);
+
+      const topRated = products
+        .filter((p) => p.review_count > 0)
+        .sort((a, b) => b.avg_rating - a.avg_rating || b.review_count - a.review_count)
+        .slice(0, 3);
+      const topRatedEl = document.getElementById('topRatedProducts');
+      if (topRatedEl) {
+        const fallback = products.slice(0, 3);
+        const topRatedList = topRated.length ? topRated : fallback;
+        topRatedEl.innerHTML = topRatedList.map(productCard).join('');
+        wireAddToCartButtons(topRatedEl, topRatedList);
+      }
+
+      const newArrivalsEl = document.getElementById('newArrivalProducts');
+      if (newArrivalsEl) {
+        const arrivals = products.slice(0, 3);
+        newArrivalsEl.innerHTML = arrivals.map(productCard).join('');
+        wireAddToCartButtons(newArrivalsEl, arrivals);
+      }
     } catch (e) { /* leave featured empty on failure */ }
   }
 

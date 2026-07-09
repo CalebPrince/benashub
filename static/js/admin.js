@@ -186,6 +186,7 @@ BH.admin = (() => {
           <td>${cat ? escapeHtml(cat.name) : ''}</td>
           <td>${formatMoney(p.price_pesewas)}</td>
           <td>${p.stock_qty}</td>
+          <td>${p.review_count ? `<span class="bh-stars">${'&starf;'.repeat(Math.round(p.avg_rating))}${'&star;'.repeat(5 - Math.round(p.avg_rating))}</span><br><span class="small text-secondary">${p.avg_rating} (${p.review_count})</span>` : '<span class="text-secondary small">No reviews</span>'}</td>
           <td>${p.ships_internationally ? 'Yes' : 'No'}</td>
           <td>${p.is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</td>
           <td class="text-nowrap">
@@ -229,6 +230,9 @@ BH.admin = (() => {
       form.querySelector('input[name="price_ghs"]').value = (product.price_pesewas / 100).toFixed(2);
       form.querySelector('input[name="stock_qty"]').value = product.stock_qty;
       form.querySelector('textarea[name="description"]').value = product.description || '';
+      form.querySelector('textarea[name="extended_description"]').value = product.extended_description || '';
+      form.querySelector('textarea[name="usage_instructions"]').value = product.usage_instructions || '';
+      form.querySelector('textarea[name="delivery_notes"]').value = product.delivery_notes || '';
       form.querySelector('input[name="ships_internationally"]').checked = product.ships_internationally;
       form.querySelector('input[name="is_active"]').checked = product.is_active;
       if (product.image_url) {
@@ -256,6 +260,9 @@ BH.admin = (() => {
       price_pesewas: Math.round(parseFloat(formData.get('price_ghs')) * 100),
       stock_qty: Number(formData.get('stock_qty')),
       description: formData.get('description'),
+      extended_description: formData.get('extended_description'),
+      usage_instructions: formData.get('usage_instructions'),
+      delivery_notes: formData.get('delivery_notes'),
       ships_internationally: form.querySelector('input[name="ships_internationally"]').checked,
       is_active: form.querySelector('input[name="is_active"]').checked,
       image_url: formData.get('image_url'),

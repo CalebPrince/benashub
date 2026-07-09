@@ -88,7 +88,90 @@ BH.productDetail = (() => {
       BH.shipping.renderEstimateResult(resultEl, result);
     });
 
+    renderProductInfo(product);
+    await loadRelatedProducts(product);
     await initReviews(slug);
+  }
+
+  function renderProductInfo(product) {
+    document.getElementById('productInfoSections').classList.remove('d-none');
+
+    const description = product.extended_description || product.description || 'A practical organic product selected for everyday household and wellness routines.';
+    const usageInstructions = product.usage_instructions || `
+      Read the product label before first use.
+      Use as part of your normal home, personal care, or wellness routine.
+      Store in a cool, dry place and keep sealed when not in use.
+      For skincare or wellness items, test a small amount first if you have sensitive skin.
+    `;
+    const deliveryNotes = product.delivery_notes || `
+      ${product.ships_internationally ? 'This item is eligible for international shipping.' : 'This item currently ships within Ghana only.'}
+      Use the shipping checker above to estimate delivery cost before checkout.
+      Order status can be checked from the Track Order page after purchase.
+      See Shipping & Returns for return windows and product condition requirements.
+    `;
+    document.getElementById('descriptionPanel').innerHTML = `
+      <h5 class="mb-3">About ${escapeHtml(product.name)}</h5>
+      <p class="text-secondary">${escapeHtml(description)}</p>
+      <p class="text-secondary mb-0">Benas Hub focuses on useful organic household and health products with clear pricing, stock visibility, and straightforward delivery options.</p>
+    `;
+
+    document.getElementById('usagePanel').innerHTML = `
+      <h5 class="mb-3">How to Use</h5>
+      ${textBlockHtml(usageInstructions)}
+    `;
+
+    document.getElementById('deliveryPanel').innerHTML = `
+      <h5 class="mb-3">Delivery &amp; Returns</h5>
+      ${textBlockHtml(deliveryNotes)}
+    `;
+
+    document.getElementById('productHighlights').innerHTML = `
+      <div class="bh-highlight-row">
+        <span>Stock</span>
+        <strong>${product.stock_qty > 0 ? product.stock_qty + ' available' : 'Out of stock'}</strong>
+      </div>
+      <div class="bh-highlight-row">
+        <span>Shipping</span>
+        <strong>${product.ships_internationally ? 'Ghana & abroad' : 'Ghana only'}</strong>
+      </div>
+      <div class="bh-highlight-row">
+        <span>Reviews</span>
+        <strong>${product.review_count ? product.avg_rating + ' / 5' : 'Be first'}</strong>
+      </div>
+      <div class="bh-highlight-row">
+        <span>Checkout</span>
+        <strong>Secure Paystack payment</strong>
+      </div>
+    `;
+  }
+
+  function textBlockHtml(text) {
+    const lines = (text || '').split('\n').map((line) => line.trim()).filter(Boolean);
+    if (lines.length <= 1) {
+      return `<p class="text-secondary mb-0">${escapeHtml(text || '')}</p>`;
+    }
+    return `<ul class="bh-clean-list">${lines.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>`;
+  }
+
+  async function loadRelatedProducts(product) {
+    const section = document.getElementById('relatedProductsSection');
+    const grid = document.getElementById('relatedProducts');
+    try {
+      const products = await BH.api.get('/products');
+      let related = products
+        .filter((p) => p.id !== product.id && p.category_id === product.category_id)
+        .slice(0, 3);
+      if (related.length < 3) {
+        const extras = products
+          .filter((p) => p.id !== product.id && !related.some((r) => r.id === p.id))
+          .slice(0, 3 - related.length);
+        related = related.concat(extras);
+      }
+      if (related.length === 0) return;
+      grid.innerHTML = related.map(BH.products.productCard).join('');
+      BH.products.wireAddToCartButtons(grid, related);
+      section.classList.remove('d-none');
+    } catch (e) { /* leave related products hidden on failure */ }
   }
 
   async function initReviews(slug) {

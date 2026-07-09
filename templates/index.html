@@ -15,6 +15,40 @@
   </div>
 </section>
 
+<section class="bh-home-strip">
+  <div class="container">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="bh-mini-feature">
+          <span class="bh-mini-feature-icon">&check;</span>
+          <div>
+            <h6>Organic Essentials</h6>
+            <p>Practical household, personal care, and wellness products selected for everyday use.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="bh-mini-feature">
+          <span class="bh-mini-feature-icon">&nearr;</span>
+          <div>
+            <h6>Ghana &amp; Abroad</h6>
+            <p>Domestic delivery plus international shipping on eligible products.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="bh-mini-feature">
+          <span class="bh-mini-feature-icon">#</span>
+          <div>
+            <h6>Order Tracking</h6>
+            <p>Customers can check order progress with their reference and email address.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="container py-5">
   <h2 class="bh-section-title mb-4">Shop by Category</h2>
   <div id="categoryTiles" class="row g-3"></div>
@@ -26,6 +60,90 @@
   <div class="text-center mt-5">
     <a href="{{ url_for('pages.catalog') }}" class="btn bh-btn-red btn-lg px-5">All Products</a>
   </div>
+</section>
+
+<section class="bh-section-band py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <h2 class="bh-section-title mb-0">Customer Favorites</h2>
+      <a href="{{ url_for('pages.catalog') }}" class="bh-inline-link">View shop</a>
+    </div>
+    <div id="topRatedProducts" class="row g-4"></div>
+  </div>
+</section>
+
+<section class="container py-5">
+  <div class="row g-4 align-items-start">
+    <div class="col-lg-5">
+      <h2 class="bh-section-title mb-3">Why Customers Choose Benas Hub</h2>
+      <p class="text-secondary mb-0">We keep the shopping experience simple: useful organic products, clear stock information, checkout with delivery estimates, and account tools for orders and reviews.</p>
+    </div>
+    <div class="col-lg-7">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="bh-info-tile">
+            <h6>Carefully Curated</h6>
+            <p>Products are grouped around real home, personal care, and pantry needs.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="bh-info-tile">
+            <h6>Clear Availability</h6>
+            <p>Product pages show stock, delivery eligibility, and shipping estimates before checkout.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="bh-info-tile">
+            <h6>Customer Accounts</h6>
+            <p>Registered customers can review products and view their order history.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="bh-info-tile">
+            <h6>Discount Codes</h6>
+            <p>Seasonal offers can be applied directly in the checkout summary.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="bh-section-band py-5">
+  <div class="container">
+    <h2 class="bh-section-title mb-4">What Customers Say</h2>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="bh-testimonial">
+          <div class="bh-stars mb-2">&starf;&starf;&starf;&starf;&starf;</div>
+          <p>Clean products, smooth checkout, and delivery updates that make it easy to plan.</p>
+          <strong>Akua M.</strong>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="bh-testimonial">
+          <div class="bh-stars mb-2">&starf;&starf;&starf;&starf;&starf;</div>
+          <p>The household items feel practical and reliable. I like seeing shipping eligibility before buying.</p>
+          <strong>Daniel A.</strong>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="bh-testimonial">
+          <div class="bh-stars mb-2">&starf;&starf;&starf;&starf;&starf;</div>
+          <p>Good range of organic products, and the order tracking page is straightforward.</p>
+          <strong>Efua B.</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container py-5">
+  <div class="d-flex justify-content-between align-items-end mb-4">
+    <h2 class="bh-section-title mb-0">New Arrivals</h2>
+    <a href="{{ url_for('pages.catalog') }}" class="bh-inline-link">Browse all products</a>
+  </div>
+  <div id="newArrivalProducts" class="row g-4"></div>
 </section>
 
 {% endblock %}

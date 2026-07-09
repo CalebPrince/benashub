@@ -101,6 +101,13 @@ def init_db(app):
             conn.execute("ALTER TABLE orders ADD COLUMN discount_code TEXT")
         if "discount_amount_pesewas" not in existing_columns:
             conn.execute("ALTER TABLE orders ADD COLUMN discount_amount_pesewas INTEGER NOT NULL DEFAULT 0")
+        product_columns = {row["name"] for row in conn.execute("PRAGMA table_info(products)")}
+        if "extended_description" not in product_columns:
+            conn.execute("ALTER TABLE products ADD COLUMN extended_description TEXT")
+        if "usage_instructions" not in product_columns:
+            conn.execute("ALTER TABLE products ADD COLUMN usage_instructions TEXT")
+        if "delivery_notes" not in product_columns:
+            conn.execute("ALTER TABLE products ADD COLUMN delivery_notes TEXT")
         conn.commit()
 
     conn.close()

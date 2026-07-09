@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, request, url_for
+from flask import Blueprint, jsonify, request, session, url_for
 
 from .. import shipping
 from ..db import get_db
@@ -86,13 +86,14 @@ def create_order():
     cur = db.cursor()
     cur.execute(
         """INSERT INTO orders
-           (order_ref, customer_name, customer_email, customer_phone, shipping_address, shipping_city,
-            shipping_country, shipping_zone_id, shipping_cost_pesewas, subtotal_pesewas, total_pesewas,
-            status, customer_notes)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment', ?)""",
+           (order_ref, customer_id, customer_name, customer_email, customer_phone, shipping_address,
+            shipping_city, shipping_country, shipping_zone_id, shipping_cost_pesewas, subtotal_pesewas,
+            total_pesewas, status, customer_notes)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_payment', ?)""",
         (
-            order_ref, customer_name, customer_email, customer_phone, shipping_address, shipping_city,
-            shipping_country, ship_result["zone_id"], shipping_cost, subtotal, total, customer_notes,
+            order_ref, session.get("customer_id"), customer_name, customer_email, customer_phone,
+            shipping_address, shipping_city, shipping_country, ship_result["zone_id"], shipping_cost,
+            subtotal, total, customer_notes,
         ),
     )
     order_id = cur.lastrowid

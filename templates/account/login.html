@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Log In &mdash; Benas Hub{% endblock %}
+{% block content %}
+
+<section class="bh-page-header">
+  <div class="container py-4">
+    <h1 class="bh-page-title">Log In</h1>
+  </div>
+</section>
+
+<section class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="bh-filter-card">
+        <div id="loginError" class="alert alert-danger d-none"></div>
+        <form id="accountLoginForm">
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" name="email" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" name="password" required>
+          </div>
+          <button type="submit" class="btn bh-btn-red w-100">Log In</button>
+        </form>
+        <p class="small text-secondary text-center mt-3 mb-0">
+          New here? <a href="{{ url_for('pages.account_register') }}">Create an account</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/account.js') }}"></script>
+<script>document.addEventListener('DOMContentLoaded', () => BH.account.initLogin());</script>
+{% endblock %}

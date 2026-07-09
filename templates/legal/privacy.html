@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy &mdash; Benas Hub{% endblock %}
+{% block content %}
+
+<section class="bh-page-header">
+  <div class="container py-4">
+    <h1 class="bh-page-title">Privacy Policy</h1>
+  </div>
+</section>
+
+<section class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <p class="bh-legal-updated mb-3">Last updated: July 9, 2026</p>
+      <div class="bh-legal-content">
+        <h2>1. Who We Are</h2>
+        <p>Benas Hub ("we", "us", "our") is a distributor of organic household and health products based in Tema, Ghana. This policy explains what personal information we collect when you use our website, how we use it, and the choices you have.</p>
+
+        <h2>2. Information We Collect</h2>
+        <p>We collect information you give us directly, such as:</p>
+        <ul>
+          <li>Your name, email address, and phone number, when you create an account, place an order, or contact us.</li>
+          <li>Your shipping address and delivery city/country, needed to fulfil an order.</li>
+          <li>Order details &mdash; the products, quantities, and prices of what you buy.</li>
+          <li>Your account password, which we store as a one-way cryptographic hash and never in plain text.</li>
+        </ul>
+        <p>We do not collect or store your card or Mobile Money details ourselves &mdash; payments are processed directly by our payment provider, Paystack, under their own privacy and security practices.</p>
+
+        <h2>3. How We Use Your Information</h2>
+        <ul>
+          <li>To process, ship, and provide support for your orders.</li>
+          <li>To create and manage your customer account and order history.</li>
+          <li>To communicate with you about your orders, including shipping and payment confirmations.</li>
+          <li>To improve our products, catalog, and site.</li>
+        </ul>
+        <p>We do not sell your personal information to third parties.</p>
+
+        <h2>4. Sharing Your Information</h2>
+        <p>We share information only as needed to run our business: with Paystack to process payments, and with delivery/courier partners to fulfil shipping, domestic and international. We may also disclose information if required by law.</p>
+
+        <h2>5. Cookies</h2>
+        <p>We use cookies for essential site functions such as keeping you logged in and remembering your session. See our <a href="{{ url_for('pages.cookie_policy') }}">Cookie Policy</a> for details.</p>
+
+        <h2>6. Data Retention</h2>
+        <p>We keep account and order records for as long as your account is active, or as needed to meet our legal, accounting, or reporting obligations.</p>
+
+        <h2>7. Your Rights</h2>
+        <p>You can review and update your account information at any time from your <a href="{{ url_for('pages.account_login') }}">account page</a>. To request a copy of your data, ask us to correct it, or ask us to delete your account, contact us using the details below.</p>
+
+        <h2>8. Contact Us</h2>
+        <p>Benas Hub, Tema, Ghana<br>
+        Phone: +233 55 588 3070<br>
+        Email: benas4real@gmail.com</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

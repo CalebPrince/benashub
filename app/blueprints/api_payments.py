@@ -2,11 +2,12 @@ import hashlib
 import hmac
 import json
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, jsonify, request
 
 from ..db import get_db
 from ..payments import get_gateway
 from ..payments.paystack import PaystackError, PaystackNotConfigured
+from ..settings import get_setting
 
 api_payments_bp = Blueprint("api_payments", __name__)
 
@@ -58,7 +59,7 @@ def verify_payment():
 
 @api_payments_bp.route("/payments/paystack/webhook", methods=["POST"])
 def paystack_webhook():
-    secret = current_app.config.get("PAYSTACK_SECRET_KEY")
+    secret = get_setting(get_db(), "paystack_secret_key")
     if not secret:
         return jsonify({"error": "not configured"}), 503
 

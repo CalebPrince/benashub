@@ -1,0 +1,28 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Settings &mdash; Benas Hub Admin{% endblock %}
+{% block admin_content %}
+
+<h3 class="mb-4">Settings</h3>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="bh-filter-card">
+      <h5 class="mb-3">Payment &mdash; Paystack</h5>
+      <p class="text-secondary small">Get your secret key from your Paystack dashboard under Settings &gt; API Keys &amp; Webhooks. Use a test key (<code>sk_test_...</code>) while testing, and switch to a live key (<code>sk_live_...</code>) when you're ready to accept real payments.</p>
+      <div id="settingsSaved" class="alert alert-success d-none">Saved.</div>
+      <div id="settingsError" class="alert alert-danger d-none"></div>
+      <form id="settingsForm">
+        <div class="mb-3">
+          <label class="form-label">Paystack Secret Key</label>
+          <input type="password" class="form-control" name="paystack_secret_key" id="paystackSecretKeyInput" placeholder="sk_test_..." autocomplete="off">
+        </div>
+        <button type="submit" class="btn bh-btn-red">Save Settings</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>document.addEventListener('DOMContentLoaded', () => BH.admin.initSettings());</script>
+{% endblock %}

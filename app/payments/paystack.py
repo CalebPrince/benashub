@@ -1,7 +1,8 @@
 import requests
-from flask import current_app
 
 from . import PaymentGateway
+from ..db import get_db
+from ..settings import get_setting
 
 PAYSTACK_BASE_URL = "https://api.paystack.co"
 
@@ -16,10 +17,10 @@ class PaystackError(Exception):
 
 class PaystackGateway(PaymentGateway):
     def _secret_key(self):
-        key = current_app.config.get("PAYSTACK_SECRET_KEY")
+        key = get_setting(get_db(), "paystack_secret_key")
         if not key:
             raise PaystackNotConfigured(
-                "Payment is not configured yet. Set the PAYSTACK_SECRET_KEY environment variable."
+                "Payment is not configured yet. Add your Paystack secret key in Admin > Settings."
             )
         return key
 

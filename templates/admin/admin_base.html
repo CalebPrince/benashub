@@ -8,21 +8,32 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
 </head>
 <body class="bh-admin-body">
-  <nav class="navbar navbar-dark bh-navbar">
-    <div class="container-fluid px-4">
-      <span class="navbar-brand d-flex align-items-center gap-2 mb-0">
-        <span class="bh-logo-badge">bh</span>
+  <div class="d-flex flex-column flex-md-row min-vh-100">
+    <aside class="bh-sidebar">
+      <div class="bh-sidebar-brand">
+        <span class="bh-logo-badge bh-logo-badge-invert">bh</span>
         <span class="bh-brand-title">BENAS HUB ADMIN</span>
-      </span>
-      <div class="d-flex align-items-center gap-3">
-        <span id="adminUsername" class="text-white-50 small"></span>
-        <button id="logoutBtn" class="btn btn-outline-light btn-sm">Log Out</button>
+      </div>
+      <nav class="bh-sidebar-nav">
+        <a class="bh-sidebar-link {{ 'active' if active_page == 'dashboard' else '' }}" href="{{ url_for('pages.admin_dashboard') }}">Dashboard</a>
+        <a class="bh-sidebar-link {{ 'active' if active_page == 'products' else '' }}" href="{{ url_for('pages.admin_products') }}">Products</a>
+        <a class="bh-sidebar-link {{ 'active' if active_page == 'categories' else '' }}" href="{{ url_for('pages.admin_categories') }}">Categories</a>
+        <a class="bh-sidebar-link {{ 'active' if active_page == 'orders' else '' }}" href="{{ url_for('pages.admin_orders') }}">Orders</a>
+        <a class="bh-sidebar-link {{ 'active' if active_page == 'customers' else '' }}" href="{{ url_for('pages.admin_customers') }}">Customers</a>
+        <a class="bh-sidebar-link {{ 'active' if active_page == 'shipping-rates' else '' }}" href="{{ url_for('pages.admin_shipping_rates') }}">Shipping Rates</a>
+        <a class="bh-sidebar-link {{ 'active' if active_page == 'settings' else '' }}" href="{{ url_for('pages.admin_settings') }}">Settings</a>
+      </nav>
+      <div class="bh-sidebar-footer">
+        <span id="adminUsername" class="text-white-50 small d-block mb-2"></span>
+        <button id="logoutBtn" class="btn btn-outline-light btn-sm w-100">Log Out</button>
+      </div>
+    </aside>
+
+    <div class="bh-admin-content flex-grow-1">
+      <div class="container-fluid px-4 py-4">
+        {% block admin_content %}{% endblock %}
       </div>
     </div>
-  </nav>
-
-  <div class="container-fluid px-4 py-4">
-    {% block admin_content %}{% endblock %}
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

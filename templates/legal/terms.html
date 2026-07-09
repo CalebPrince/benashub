@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Terms of Use &mdash; Benas Hub{% endblock %}
+{% block content %}
+
+<section class="bh-page-header">
+  <div class="container py-4">
+    <h1 class="bh-page-title">Terms of Use</h1>
+  </div>
+</section>
+
+<section class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <p class="bh-legal-updated mb-3">Last updated: July 9, 2026</p>
+      <div class="bh-legal-content">
+        <h2>1. Acceptance of Terms</h2>
+        <p>By accessing or using the Benas Hub website, you agree to these Terms of Use. If you do not agree, please do not use the site.</p>
+
+        <h2>2. Products &amp; Pricing</h2>
+        <p>All prices are shown in Ghana Cedis (GHS) and include applicable taxes unless stated otherwise. We try to keep product descriptions, images, stock levels, and prices accurate, but errors can occur; if we discover a pricing or listing error on an order you've placed, we will contact you before processing it.</p>
+
+        <h2>3. Orders &amp; Payment</h2>
+        <p>Placing an order is an offer to purchase, which we may accept or decline (for example, if a product is out of stock). Payments are processed securely by Paystack. An order is confirmed only once payment has been successfully verified.</p>
+
+        <h2>4. Shipping</h2>
+        <p>Some products are available for international shipping and some are Ghana-only, as indicated on each product page. Shipping costs and eligibility are calculated at checkout based on your delivery destination. See our <a href="{{ url_for('pages.shipping_returns') }}">Shipping &amp; Returns Policy</a> for details.</p>
+
+        <h2>5. Accounts</h2>
+        <p>If you create an account, you're responsible for keeping your login details confidential and for all activity under your account. Let us know right away if you believe your account has been used without your permission.</p>
+
+        <h2>6. Intellectual Property</h2>
+        <p>The Benas Hub name, logo, and site content are the property of Benas Hub and may not be used without our permission.</p>
+
+        <h2>7. Limitation of Liability</h2>
+        <p>Benas Hub is not liable for indirect or incidental damages arising from use of the site or products, to the fullest extent permitted by law. Nothing in these terms limits any right you have under Ghanaian consumer protection law that cannot be excluded.</p>
+
+        <h2>8. Changes to These Terms</h2>
+        <p>We may update these terms from time to time; the "Last updated" date above will reflect the most recent change. Continued use of the site after a change means you accept the updated terms.</p>
+
+        <h2>9. Governing Law</h2>
+        <p>These terms are governed by the laws of Ghana.</p>
+
+        <h2>10. Contact Us</h2>
+        <p>Benas Hub, Tema, Ghana<br>
+        Phone: +233 55 588 3070<br>
+        Email: benas4real@gmail.com</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

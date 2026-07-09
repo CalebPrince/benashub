@@ -12,7 +12,8 @@ class Config:
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")  # if unset, seed.py generates + prints one
 
     PAYMENT_GATEWAY = os.environ.get("PAYMENT_GATEWAY", "paystack")
-    PAYSTACK_SECRET_KEY = os.environ.get("PAYSTACK_SECRET_KEY")
+    # Payment provider API keys are NOT stored here — the admin sets them from
+    # Admin > Settings in the dashboard, and they're kept in the settings table.
 
     UPLOAD_DIR = os.path.join(BASE_DIR, "static", "img", "products")
     ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}

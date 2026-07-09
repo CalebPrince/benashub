@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}My Account &mdash; Benas Hub{% endblock %}
+{% block content %}
+
+<section class="bh-page-header">
+  <div class="container py-4 d-flex justify-content-between align-items-center">
+    <h1 class="bh-page-title">My Account</h1>
+    <button id="accountLogoutBtn" class="btn btn-outline-light btn-sm">Log Out</button>
+  </div>
+</section>
+
+<section class="container py-5">
+  <div class="row g-4">
+    <div class="col-lg-5" id="profile">
+      <div class="bh-filter-card">
+        <h5 class="mb-3">Profile</h5>
+        <div id="profileSaved" class="alert alert-success d-none">Saved.</div>
+        <div id="profileError" class="alert alert-danger d-none"></div>
+        <form id="profileForm">
+          <div class="mb-3">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-control" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input type="tel" class="form-control" name="phone">
+          </div>
+          <hr>
+          <p class="small text-secondary mb-2">Leave blank to keep your current password.</p>
+          <div class="mb-3">
+            <label class="form-label">Current Password</label>
+            <input type="password" class="form-control" name="current_password" autocomplete="off">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">New Password</label>
+            <input type="password" class="form-control" name="new_password" minlength="8" autocomplete="off">
+          </div>
+          <button type="submit" class="btn bh-btn-red w-100">Save Changes</button>
+        </form>
+      </div>
+    </div>
+    <div class="col-lg-7" id="orders">
+      <div class="bh-filter-card">
+        <h5 class="mb-3">Order History</h5>
+        <div id="ordersEmptyState" class="text-secondary small d-none">You haven't placed any orders yet.</div>
+        <div class="table-responsive">
+          <table class="table align-middle bh-table">
+            <thead>
+              <tr><th>Order Ref</th><th>Date</th><th>Status</th><th>Total</th></tr>
+            </thead>
+            <tbody id="accountOrdersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/account.js') }}"></script>
+<script>document.addEventListener('DOMContentLoaded', () => BH.account.initDashboard());</script>
+{% endblock %}

@@ -24,6 +24,7 @@ def create_app():
     from .blueprints.api_orders import api_orders_bp
     from .blueprints.api_payments import api_payments_bp
     from .blueprints.api_admin import api_admin_bp
+    from .blueprints.api_customers import api_customers_bp
 
     app.register_blueprint(pages_bp)
     app.register_blueprint(api_catalog_bp, url_prefix="/api")
@@ -31,5 +32,6 @@ def create_app():
     app.register_blueprint(api_orders_bp, url_prefix="/api")
     app.register_blueprint(api_payments_bp, url_prefix="/api")
     app.register_blueprint(api_admin_bp, url_prefix="/api/admin")
+    app.register_blueprint(api_customers_bp, url_prefix="/api/customers")
 
     return app

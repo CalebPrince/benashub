@@ -5,7 +5,8 @@
       "name": "benashub-server",
       "runtimeExecutable": "python",
       "runtimeArgs": ["server.py"],
-      "port": 5000
+      "port": 5000,
+      "autoPort": true
     }
   ]
 }

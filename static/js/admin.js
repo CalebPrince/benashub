@@ -35,46 +35,109 @@ BH.admin = (() => {
     });
   }
 
-  let categories = [];
-  let currentProducts = [];
-  let currentRates = [];
+  // ---------- SHARED CHROME (every logged-in admin page) ----------
 
-  async function initDashboard() {
+  async function initAdminChrome() {
     try {
       const sessionInfo = await BH.api.get('/admin/session');
       if (!sessionInfo.logged_in) {
         window.location.href = '/admin/login';
-        return;
+        return false;
       }
       document.getElementById('adminUsername').textContent = sessionInfo.username;
     } catch (e) {
       window.location.href = '/admin/login';
-      return;
+      return false;
     }
 
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await BH.api.post('/admin/logout');
       window.location.href = '/admin/login';
     });
+    return true;
+  }
 
+  // ---------- OVERVIEW ----------
+
+  async function initOverview() {
+    if (!(await initAdminChrome())) return;
+    const stats = await BH.api.get('/admin/stats');
+    renderStatCards(stats);
+    renderRecentOrders(stats.recent_orders);
+    renderLowStock(stats.low_stock);
+  }
+
+  function statCard(label, value) {
+    return `
+      <div class="col-sm-6 col-lg-4 col-xl-2">
+        <div class="bh-stat-card">
+          <div class="bh-stat-value">${value}</div>
+          <div class="bh-stat-label">${label}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderStatCards(stats) {
+    document.getElementById('statCards').innerHTML = [
+      statCard('Products', stats.product_count),
+      statCard('Orders', stats.order_count),
+      statCard('Pending Payment', stats.pending_payment_count),
+      statCard('Revenue', formatMoney(stats.revenue_pesewas)),
+      statCard('Customers', stats.customer_count),
+      statCard('Low Stock', stats.low_stock.length),
+    ].join('');
+  }
+
+  function renderRecentOrders(orders) {
+    const body = document.getElementById('recentOrdersBody');
+    const emptyState = document.getElementById('recentOrdersEmpty');
+    if (orders.length === 0) {
+      emptyState.classList.remove('d-none');
+      return;
+    }
+    body.innerHTML = orders.map((o) => `
+      <tr>
+        <td>${escapeHtml(o.order_ref)}</td>
+        <td>${escapeHtml(o.customer_name)}</td>
+        <td>${escapeHtml(o.status.replace('_', ' '))}</td>
+        <td>${formatMoney(o.total_pesewas)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderLowStock(items) {
+    const list = document.getElementById('lowStockList');
+    const emptyState = document.getElementById('lowStockEmpty');
+    if (items.length === 0) {
+      emptyState.classList.remove('d-none');
+      return;
+    }
+    list.innerHTML = items.map((p) => `
+      <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+        <span>${escapeHtml(p.name)}</span>
+        <span class="badge bg-danger">${p.stock_qty} left</span>
+      </li>
+    `).join('');
+  }
+
+  // ---------- PRODUCTS ----------
+
+  let categories = [];
+  let currentProducts = [];
+
+  async function initProducts() {
+    if (!(await initAdminChrome())) return;
     categories = await BH.api.get('/admin/categories');
     populateCategorySelect();
-
     wireProductsTab();
-    wireOrdersTab();
-    wireRatesTab();
-
     await loadProducts();
-    await loadOrders();
-    await loadRates();
   }
 
   function populateCategorySelect() {
     const select = document.getElementById('productCategorySelect');
     select.innerHTML = categories.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
   }
-
-  // ---------- PRODUCTS ----------
 
   function wireProductsTab() {
     document.getElementById('addProductBtn').addEventListener('click', () => openProductModal());
@@ -212,7 +275,115 @@ BH.admin = (() => {
     }
   }
 
+  // ---------- CATEGORIES ----------
+
+  let currentCategories = [];
+
+  async function initCategories() {
+    if (!(await initAdminChrome())) return;
+    wireCategoriesTab();
+    await loadCategories();
+  }
+
+  function wireCategoriesTab() {
+    document.getElementById('addCategoryBtn').addEventListener('click', () => openCategoryModal());
+    document.getElementById('categoryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveCategory(e.target);
+    });
+  }
+
+  async function loadCategories() {
+    currentCategories = await BH.api.get('/admin/categories');
+    renderCategoriesTable();
+  }
+
+  function renderCategoriesTable() {
+    const body = document.getElementById('categoriesTableBody');
+    body.innerHTML = currentCategories.map((c) => `
+      <tr>
+        <td>${escapeHtml(c.name)}</td>
+        <td>${escapeHtml(c.slug)}</td>
+        <td>${c.sort_order}</td>
+        <td>${c.product_count}</td>
+        <td class="text-nowrap">
+          <button class="btn btn-sm btn-outline-secondary edit-category-btn" data-id="${c.id}">Edit</button>
+          <button class="btn btn-sm btn-outline-danger delete-category-btn" data-id="${c.id}">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+
+    body.querySelectorAll('.edit-category-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const category = currentCategories.find((c) => c.id === Number(btn.dataset.id));
+        openCategoryModal(category);
+      });
+    });
+    body.querySelectorAll('.delete-category-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this category?')) return;
+        try {
+          await BH.api.del('/admin/categories/' + btn.dataset.id);
+          await loadCategories();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+    });
+  }
+
+  let categoryModal;
+  function openCategoryModal(category) {
+    const form = document.getElementById('categoryForm');
+    form.reset();
+    document.getElementById('categoryFormError').classList.add('d-none');
+    document.getElementById('categoryModalTitle').textContent = category ? 'Edit Category' : 'Add Category';
+    form.querySelector('input[name="id"]').value = category ? category.id : '';
+
+    if (category) {
+      form.querySelector('input[name="name"]').value = category.name;
+      form.querySelector('input[name="slug"]').value = category.slug;
+      form.querySelector('textarea[name="description"]').value = category.description || '';
+      form.querySelector('input[name="sort_order"]').value = category.sort_order;
+    }
+
+    if (!categoryModal) categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+    categoryModal.show();
+  }
+
+  async function saveCategory(form) {
+    const errorEl = document.getElementById('categoryFormError');
+    errorEl.classList.add('d-none');
+    const formData = new FormData(form);
+    const id = formData.get('id');
+    const payload = {
+      name: formData.get('name'),
+      slug: formData.get('slug') || slugify(formData.get('name')),
+      description: formData.get('description'),
+      sort_order: Number(formData.get('sort_order') || 0),
+    };
+
+    try {
+      if (id) {
+        await BH.api.put('/admin/categories/' + id, payload);
+      } else {
+        await BH.api.post('/admin/categories', payload);
+      }
+      categoryModal.hide();
+      await loadCategories();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.classList.remove('d-none');
+    }
+  }
+
   // ---------- ORDERS ----------
+
+  async function initOrders() {
+    if (!(await initAdminChrome())) return;
+    wireOrdersTab();
+    await loadOrders();
+  }
 
   function wireOrdersTab() {
     document.getElementById('orderStatusFilter').addEventListener('change', loadOrders);
@@ -284,7 +455,76 @@ BH.admin = (() => {
     await loadOrders();
   }
 
+  // ---------- CUSTOMERS ----------
+
+  let currentCustomers = [];
+
+  async function initCustomers() {
+    if (!(await initAdminChrome())) return;
+    await loadCustomers();
+  }
+
+  async function loadCustomers() {
+    currentCustomers = await BH.api.get('/admin/customers');
+    const body = document.getElementById('customersTableBody');
+    const emptyState = document.getElementById('customersEmpty');
+
+    if (currentCustomers.length === 0) {
+      emptyState.classList.remove('d-none');
+      return;
+    }
+
+    body.innerHTML = currentCustomers.map((c) => `
+      <tr>
+        <td>${escapeHtml(c.name)}</td>
+        <td>${escapeHtml(c.email)}</td>
+        <td>${escapeHtml(c.phone || '')}</td>
+        <td>${c.order_count}</td>
+        <td>${escapeHtml(c.created_at)}</td>
+        <td><button class="btn btn-sm btn-outline-secondary view-customer-btn" data-id="${c.id}">View</button></td>
+      </tr>
+    `).join('');
+
+    body.querySelectorAll('.view-customer-btn').forEach((btn) => {
+      btn.addEventListener('click', () => openCustomerModal(Number(btn.dataset.id)));
+    });
+  }
+
+  let customerModal;
+  async function openCustomerModal(customerId) {
+    const customer = await BH.api.get('/admin/customers/' + customerId);
+    document.getElementById('customerModalTitle').textContent = customer.name;
+
+    const ordersHtml = customer.orders.length
+      ? customer.orders.map((o) => `
+          <div class="d-flex justify-content-between small mb-1">
+            <span>${escapeHtml(o.order_ref)} &mdash; ${escapeHtml(o.status.replace('_', ' '))}</span>
+            <span>${formatMoney(o.total_pesewas)}</span>
+          </div>
+        `).join('')
+      : '<p class="text-secondary small mb-0">No orders yet.</p>';
+
+    document.getElementById('customerModalBody').innerHTML = `
+      <p class="mb-1">${escapeHtml(customer.email)} &mdash; ${escapeHtml(customer.phone || 'No phone on file')}</p>
+      <p class="small text-secondary mb-3">Joined ${escapeHtml(customer.created_at)}</p>
+      <hr>
+      <h6 class="mb-2">Order History</h6>
+      ${ordersHtml}
+    `;
+
+    if (!customerModal) customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
+    customerModal.show();
+  }
+
   // ---------- SHIPPING RATES ----------
+
+  let currentRates = [];
+
+  async function initShippingRates() {
+    if (!(await initAdminChrome())) return;
+    wireRatesTab();
+    await loadRates();
+  }
 
   function wireRatesTab() {
     document.getElementById('addRateBtn').addEventListener('click', () => openRateModal());
@@ -368,5 +608,46 @@ BH.admin = (() => {
     }
   }
 
-  return { initLogin, initDashboard };
+  // ---------- SETTINGS ----------
+
+  async function initSettings() {
+    if (!(await initAdminChrome())) return;
+    wireSettingsTab();
+    await loadSettings();
+  }
+
+  function wireSettingsTab() {
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveSettings(e.target);
+    });
+  }
+
+  async function loadSettings() {
+    const settings = await BH.api.get('/admin/settings');
+    document.getElementById('paystackSecretKeyInput').value = settings.paystack_secret_key || '';
+  }
+
+  async function saveSettings(form) {
+    const savedEl = document.getElementById('settingsSaved');
+    const errorEl = document.getElementById('settingsError');
+    savedEl.classList.add('d-none');
+    errorEl.classList.add('d-none');
+
+    const formData = new FormData(form);
+    try {
+      await BH.api.put('/admin/settings', {
+        paystack_secret_key: formData.get('paystack_secret_key'),
+      });
+      savedEl.classList.remove('d-none');
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.classList.remove('d-none');
+    }
+  }
+
+  return {
+    initLogin, initOverview, initProducts, initCategories, initOrders,
+    initCustomers, initShippingRates, initSettings,
+  };
 })();

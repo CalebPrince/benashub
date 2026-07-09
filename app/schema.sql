@@ -35,9 +35,20 @@ CREATE TABLE shipping_rates (
     is_active INTEGER NOT NULL DEFAULT 1
 );
 
+CREATE TABLE customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    phone TEXT,
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     order_ref TEXT NOT NULL UNIQUE,
+    customer_id INTEGER REFERENCES customers(id),
     customer_name TEXT NOT NULL,
     customer_email TEXT NOT NULL,
     customer_phone TEXT NOT NULL,
@@ -83,4 +94,10 @@ CREATE TABLE admin_users (
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

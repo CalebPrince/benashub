@@ -30,6 +30,7 @@ BH.checkout = (() => {
     document.getElementById('checkoutForm').classList.remove('d-none');
 
     renderOrderSummary(items);
+    await prefillFromAccount();
     await BH.shipping.populateCountrySelect(document.getElementById('shippingCountrySelect'));
 
     document.getElementById('shippingCountrySelect').addEventListener('change', () => refreshShipping(items));
@@ -51,6 +52,16 @@ BH.checkout = (() => {
     const subtotal = BH.cart.getSubtotalPesewas();
     document.getElementById('checkoutSubtotal').textContent = formatMoney(subtotal);
     document.getElementById('checkoutTotal').textContent = formatMoney(subtotal);
+  }
+
+  async function prefillFromAccount() {
+    try {
+      const me = await BH.api.get('/customers/me');
+      const form = document.getElementById('checkoutFormEl');
+      form.customer_name.value = me.name || '';
+      form.customer_email.value = me.email || '';
+      form.customer_phone.value = me.phone || '';
+    } catch (e) { /* not logged in — leave the form blank for guest checkout */ }
   }
 
   async function refreshShipping(items) {

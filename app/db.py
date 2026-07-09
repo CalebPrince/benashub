@@ -36,6 +36,30 @@ def init_db(app):
 
         seed.seed(conn, app.config)
         conn.commit()
+    else:
+        # Idempotent migrations for databases created before these tables/columns existed.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT,
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )"""
+        )
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                phone TEXT,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )"""
+        )
+        existing_columns = {row["name"] for row in conn.execute("PRAGMA table_info(orders)")}
+        if "customer_id" not in existing_columns:
+            conn.execute("ALTER TABLE orders ADD COLUMN customer_id INTEGER REFERENCES customers(id)")
+        conn.commit()
 
     conn.close()
 

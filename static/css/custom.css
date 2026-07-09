@@ -13,20 +13,25 @@ body {
   color: #222;
 }
 
-/* Logo badge (hexagon "bh" mark) */
+/* Logo badge (hexagon "bh" mark) — default is for light surfaces (header/footer/drawer) */
 .bh-logo-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 38px;
   height: 38px;
-  background: var(--bh-white);
-  color: var(--bh-black);
+  background: var(--bh-black);
+  color: var(--bh-white);
   font-weight: 800;
   font-size: 1.05rem;
   line-height: 1;
   clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
   flex-shrink: 0;
+}
+/* Invert for the surfaces that stay black (admin top bar, admin login page) */
+.bh-logo-badge-invert {
+  background: var(--bh-white);
+  color: var(--bh-black);
 }
 .bh-logo-badge-lg {
   width: 64px;
@@ -42,7 +47,7 @@ body {
 .bh-brand-title {
   font-weight: 800;
   letter-spacing: 0.04em;
-  color: var(--bh-white);
+  color: var(--bh-black);
   font-size: 1rem;
 }
 .bh-brand-sub {
@@ -53,13 +58,52 @@ body {
   text-transform: uppercase;
 }
 
-/* Navbar */
+/* Top utility bar (sits above the public header — black) */
+.bh-topbar {
+  background-color: var(--bh-black);
+  padding: 0.4rem 0;
+  /* keep the account dropdown above the sticky navbar (z-index 1020) */
+  position: relative;
+  z-index: 1030;
+}
+.bh-topbar-link {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.bh-topbar-link:hover,
+.bh-topbar-link:focus {
+  color: var(--bh-red);
+}
+.bh-topbar-search {
+  min-width: 220px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--bh-white);
+}
+.bh-topbar-search::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+.bh-topbar-search:focus {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--bh-red);
+  color: var(--bh-white);
+  box-shadow: none;
+}
+.bh-topbar .dropdown-menu {
+  font-size: 0.9rem;
+}
+
+/* Navbar (public header — white) */
 .bh-navbar {
-  background-color: var(--bh-black) !important;
+  background-color: var(--bh-white) !important;
   border-bottom: 3px solid var(--bh-red);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 .bh-navbar .nav-link {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(20, 20, 20, 0.8);
+  font-weight: 600;
 }
 .bh-navbar .nav-link:hover {
   color: var(--bh-red);
@@ -68,23 +112,96 @@ body {
   background-color: var(--bh-red) !important;
 }
 
-/* Mobile nav drawer (offcanvas) */
-.bh-offcanvas {
+/* Admin sidebar — stays black */
+.bh-sidebar {
   background-color: var(--bh-black);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) {
+  .bh-sidebar {
+    width: 240px;
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+  }
+}
+.bh-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1.25rem 1rem;
+}
+.bh-sidebar-brand .bh-brand-title {
+  color: var(--bh-white);
+}
+.bh-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.75rem;
+  flex-grow: 1;
+}
+.bh-sidebar-link {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  margin-bottom: 0.15rem;
+}
+.bh-sidebar-link:hover {
   color: #fff;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+.bh-sidebar-link.active {
+  color: #fff;
+  background-color: rgba(224, 38, 61, 0.15);
+  border-left-color: var(--bh-red);
+}
+.bh-sidebar-footer {
+  padding: 1rem 1.25rem 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 1rem;
+}
+.bh-admin-content {
+  min-width: 0;
+}
+
+/* Mobile nav drawer (offcanvas) — matches the white header */
+.bh-offcanvas {
+  background-color: var(--bh-white);
+  color: #222;
   border-left: 3px solid var(--bh-red);
 }
 .bh-offcanvas .offcanvas-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--bh-gray-border);
 }
 .bh-offcanvas .nav-link {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(20, 20, 20, 0.85);
   font-weight: 600;
   padding-top: 0.6rem;
   padding-bottom: 0.6rem;
 }
 .bh-offcanvas .nav-link:hover {
   color: var(--bh-red);
+}
+
+/* Cart icon button */
+.bh-cart-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+}
+.bh-cart-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* Buttons */
@@ -248,14 +365,22 @@ body {
 
 /* Footer */
 .bh-footer {
-  background-color: var(--bh-black);
-  color: #fff;
+  background-color: var(--bh-white);
+  color: #444;
+  border-top: 3px solid var(--bh-red);
 }
 .bh-footer-link {
-  color: rgba(255, 255, 255, 0.75);
+  color: #444;
   text-decoration: none;
 }
 .bh-footer-link:hover {
+  color: var(--bh-red);
+}
+.bh-footer-fineprint {
+  color: #888;
+  text-decoration: none;
+}
+.bh-footer-fineprint:hover {
   color: var(--bh-red);
 }
 
@@ -284,13 +409,24 @@ body {
 .bh-admin-body {
   background-color: var(--bh-gray-bg);
 }
-.bh-admin-tabs .nav-link {
-  color: #555;
-  font-weight: 600;
+.bh-stat-card {
+  background: #fff;
+  border: 1px solid var(--bh-gray-border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  border-left: 4px solid var(--bh-red);
 }
-.bh-admin-tabs .nav-link.active {
-  color: var(--bh-red);
-  border-color: var(--bh-gray-border) var(--bh-gray-border) #fff;
+.bh-stat-card .bh-stat-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--bh-black);
+}
+.bh-stat-card .bh-stat-label {
+  color: #777;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
 }
 .bh-image-preview {
   width: 90px;
@@ -298,4 +434,25 @@ body {
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid var(--bh-gray-border);
+}
+
+/* Legal / policy pages */
+.bh-legal-content h2 {
+  font-weight: 800;
+  font-size: 1.3rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  border-left: 4px solid var(--bh-red);
+  padding-left: 0.6rem;
+}
+.bh-legal-content h2:first-of-type {
+  margin-top: 0;
+}
+.bh-legal-content p, .bh-legal-content li {
+  color: #444;
+  line-height: 1.7;
+}
+.bh-legal-updated {
+  color: #888;
+  font-size: 0.85rem;
 }

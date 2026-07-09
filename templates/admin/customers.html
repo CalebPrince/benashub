@@ -1,0 +1,33 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Customers &mdash; Benas Hub Admin{% endblock %}
+{% block admin_content %}
+
+<h3 class="mb-4">Customers</h3>
+
+<div id="customersEmpty" class="text-secondary small d-none">No customers have registered yet.</div>
+<div class="table-responsive">
+  <table class="table align-middle bh-table">
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Phone</th><th>Orders</th><th>Joined</th><th></th></tr>
+    </thead>
+    <tbody id="customersTableBody"></tbody>
+  </table>
+</div>
+
+<!-- Customer Detail Modal -->
+<div class="modal fade" id="customerModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="customerModalTitle">Customer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="customerModalBody"></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>document.addEventListener('DOMContentLoaded', () => BH.admin.initCustomers());</script>
+{% endblock %}

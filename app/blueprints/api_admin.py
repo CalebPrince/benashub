@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 
 from ..auth import login_required
 from ..db import get_db
+from ..settings import get_setting, set_setting
 
 api_admin_bp = Blueprint("api_admin", __name__)
 
@@ -161,14 +162,83 @@ def upload_product_image():
     return jsonify({"url": f"/static/img/products/{filename}"})
 
 
-# --- categories (read-only list for the product form dropdown) ---
+# --- categories ---
+
+def category_dict(row, product_count):
+    return {
+        "id": row["id"], "name": row["name"], "slug": row["slug"],
+        "description": row["description"], "sort_order": row["sort_order"],
+        "product_count": product_count,
+    }
+
 
 @api_admin_bp.route("/categories", methods=["GET"])
 @login_required
 def list_categories_admin():
     db = get_db()
-    rows = db.execute("SELECT * FROM categories ORDER BY sort_order, name").fetchall()
-    return jsonify([{"id": r["id"], "name": r["name"], "slug": r["slug"]} for r in rows])
+    rows = db.execute(
+        """SELECT c.*, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count
+           FROM categories c ORDER BY c.sort_order, c.name"""
+    ).fetchall()
+    return jsonify([category_dict(r, r["product_count"]) for r in rows])
+
+
+@api_admin_bp.route("/categories", methods=["POST"])
+@login_required
+def create_category():
+    data = request.get_json(force=True, silent=True) or {}
+    if not data.get("name") or not data.get("slug"):
+        return jsonify({"error": "Name and slug are required"}), 400
+    db = get_db()
+    try:
+        cur = db.execute(
+            "INSERT INTO categories (name, slug, description, sort_order) VALUES (?, ?, ?, ?)",
+            (data["name"], data["slug"], data.get("description", ""), int(data.get("sort_order", 0))),
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "A category with that slug already exists"}), 400
+    row = db.execute("SELECT * FROM categories WHERE id = ?", (cur.lastrowid,)).fetchone()
+    return jsonify(category_dict(row, 0)), 201
+
+
+@api_admin_bp.route("/categories/<int:category_id>", methods=["PUT"])
+@login_required
+def update_category(category_id):
+    data = request.get_json(force=True, silent=True) or {}
+    db = get_db()
+    existing = db.execute("SELECT * FROM categories WHERE id = ?", (category_id,)).fetchone()
+    if existing is None:
+        return jsonify({"error": "Category not found"}), 404
+
+    try:
+        db.execute(
+            "UPDATE categories SET name=?, slug=?, description=?, sort_order=? WHERE id=?",
+            (
+                data.get("name", existing["name"]), data.get("slug", existing["slug"]),
+                data.get("description", existing["description"]),
+                int(data.get("sort_order", existing["sort_order"])), category_id,
+            ),
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "A category with that slug already exists"}), 400
+
+    row = db.execute("SELECT * FROM categories WHERE id = ?", (category_id,)).fetchone()
+    count = db.execute("SELECT COUNT(*) AS c FROM products WHERE category_id = ?", (category_id,)).fetchone()["c"]
+    return jsonify(category_dict(row, count))
+
+
+@api_admin_bp.route("/categories/<int:category_id>", methods=["DELETE"])
+@login_required
+def delete_category(category_id):
+    db = get_db()
+    count = db.execute("SELECT COUNT(*) AS c FROM products WHERE category_id = ?", (category_id,)).fetchone()["c"]
+    if count > 0:
+        return jsonify({"error": f"This category has {count} product(s) — reassign or remove them first"}), 400
+    db.execute("DELETE FROM categories WHERE id = ?", (category_id,))
+    db.commit()
+    return jsonify({"ok": True})
 
 
 # --- orders ---
@@ -313,3 +383,120 @@ def update_shipping_rate(rate_id):
     db.commit()
     row = db.execute("SELECT * FROM shipping_rates WHERE id = ?", (rate_id,)).fetchone()
     return jsonify(rate_dict(row))
+
+
+# --- settings (payment gateway keys, etc.) ---
+
+@api_admin_bp.route("/settings", methods=["GET"])
+@login_required
+def get_settings():
+    db = get_db()
+    return jsonify(
+        {
+            "paystack_secret_key": get_setting(db, "paystack_secret_key", "") or "",
+        }
+    )
+
+
+@api_admin_bp.route("/settings", methods=["PUT"])
+@login_required
+def update_settings():
+    data = request.get_json(force=True, silent=True) or {}
+    db = get_db()
+    if "paystack_secret_key" in data:
+        set_setting(db, "paystack_secret_key", (data["paystack_secret_key"] or "").strip())
+    db.commit()
+    return jsonify({"ok": True})
+
+
+# --- customers ---
+
+@api_admin_bp.route("/customers", methods=["GET"])
+@login_required
+def list_customers():
+    db = get_db()
+    rows = db.execute(
+        """SELECT c.*, COUNT(o.id) AS order_count, COALESCE(SUM(o.total_pesewas), 0) AS total_spent_pesewas
+           FROM customers c
+           LEFT JOIN orders o ON o.customer_id = c.id
+           GROUP BY c.id
+           ORDER BY c.created_at DESC"""
+    ).fetchall()
+    return jsonify(
+        [
+            {
+                "id": r["id"], "name": r["name"], "email": r["email"], "phone": r["phone"],
+                "order_count": r["order_count"], "total_spent_pesewas": r["total_spent_pesewas"],
+                "created_at": r["created_at"],
+            }
+            for r in rows
+        ]
+    )
+
+
+@api_admin_bp.route("/customers/<int:customer_id>", methods=["GET"])
+@login_required
+def get_customer_admin(customer_id):
+    db = get_db()
+    customer = db.execute("SELECT * FROM customers WHERE id = ?", (customer_id,)).fetchone()
+    if customer is None:
+        return jsonify({"error": "Customer not found"}), 404
+    orders = db.execute(
+        "SELECT * FROM orders WHERE customer_id = ? ORDER BY created_at DESC", (customer_id,)
+    ).fetchall()
+    return jsonify(
+        {
+            "id": customer["id"], "name": customer["name"], "email": customer["email"],
+            "phone": customer["phone"], "created_at": customer["created_at"],
+            "orders": [
+                {
+                    "order_ref": o["order_ref"], "status": o["status"],
+                    "total_pesewas": o["total_pesewas"], "created_at": o["created_at"],
+                }
+                for o in orders
+            ],
+        }
+    )
+
+
+# --- dashboard stats ---
+
+@api_admin_bp.route("/stats", methods=["GET"])
+@login_required
+def get_stats():
+    db = get_db()
+    product_count = db.execute("SELECT COUNT(*) AS c FROM products WHERE is_active = 1").fetchone()["c"]
+    order_count = db.execute("SELECT COUNT(*) AS c FROM orders").fetchone()["c"]
+    pending_count = db.execute(
+        "SELECT COUNT(*) AS c FROM orders WHERE status = 'pending_payment'"
+    ).fetchone()["c"]
+    revenue = db.execute(
+        """SELECT COALESCE(SUM(total_pesewas), 0) AS total FROM orders
+           WHERE status IN ('paid', 'processing', 'shipped', 'completed')"""
+    ).fetchone()["total"]
+    customer_count = db.execute("SELECT COUNT(*) AS c FROM customers").fetchone()["c"]
+
+    low_stock_rows = db.execute(
+        "SELECT id, name, stock_qty FROM products WHERE is_active = 1 AND stock_qty <= 5 ORDER BY stock_qty"
+    ).fetchall()
+    recent_order_rows = db.execute(
+        "SELECT * FROM orders ORDER BY created_at DESC LIMIT 5"
+    ).fetchall()
+
+    return jsonify(
+        {
+            "product_count": product_count,
+            "order_count": order_count,
+            "pending_payment_count": pending_count,
+            "revenue_pesewas": revenue,
+            "customer_count": customer_count,
+            "low_stock": [{"id": r["id"], "name": r["name"], "stock_qty": r["stock_qty"]} for r in low_stock_rows],
+            "recent_orders": [
+                {
+                    "order_ref": r["order_ref"], "customer_name": r["customer_name"],
+                    "status": r["status"], "total_pesewas": r["total_pesewas"],
+                }
+                for r in recent_order_rows
+            ],
+        }
+    )

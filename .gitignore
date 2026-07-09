@@ -6,3 +6,4 @@ venv/
 benashub.db
 static/img/products/*
 !static/img/products/placeholder.svg
+.secret_key

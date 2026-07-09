@@ -21,6 +21,12 @@ BH.api = (() => {
       data = null;
     }
     if (!res.ok) {
+      // Admin session expired mid-page: send back to the login screen instead
+      // of surfacing "Authentication required" on whatever they were doing.
+      if (res.status === 401 && path.startsWith('/admin/') && !path.endsWith('/login')
+          && window.location.pathname.startsWith('/admin')) {
+        window.location.href = '/admin/login';
+      }
       const message = (data && data.error) ? data.error : `Request failed (${res.status})`;
       const err = new Error(message);
       err.status = res.status;

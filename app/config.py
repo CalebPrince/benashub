@@ -4,8 +4,29 @@ import secrets
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def _load_or_create_secret_key():
+    """Prefer the SECRET_KEY env var; otherwise persist a generated key to a
+    gitignored file so sessions survive server restarts (the dev server
+    restarts on every code change, which would otherwise log everyone out)."""
+    key = os.environ.get("SECRET_KEY")
+    if key:
+        return key
+    key_path = os.path.join(BASE_DIR, ".secret_key")
+    try:
+        with open(key_path, "r", encoding="utf-8") as f:
+            key = f.read().strip()
+        if key:
+            return key
+    except OSError:
+        pass
+    key = secrets.token_hex(32)
+    with open(key_path, "w", encoding="utf-8") as f:
+        f.write(key)
+    return key
+
+
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+    SECRET_KEY = _load_or_create_secret_key()
     DB_PATH = os.environ.get("DB_PATH", os.path.join(BASE_DIR, "benashub.db"))
 
     ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")

@@ -117,6 +117,7 @@ CREATE TABLE orders (
     status TEXT NOT NULL DEFAULT 'pending_payment',
     customer_notes TEXT,
     admin_notes TEXT,
+    inventory_deducted_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -155,4 +156,14 @@ CREATE TABLE settings (
     key TEXT PRIMARY KEY,
     value TEXT,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE product_low_stock_alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    product_name TEXT NOT NULL,
+    stock_qty INTEGER NOT NULL,
+    threshold INTEGER NOT NULL,
+    notified_at TEXT NOT NULL DEFAULT (datetime('now')),
+    resolved_at TEXT
 );

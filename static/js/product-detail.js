@@ -46,6 +46,7 @@ BH.productDetail = (() => {
     setMetaDescription(product.meta_description || product.description || product.extended_description || '');
 
     const galleryImages = buildGalleryImages(product);
+    setSocialMeta(product, galleryImages);
     const badges = parseList(product.badges);
 
     container.innerHTML = `
@@ -126,10 +127,10 @@ BH.productDetail = (() => {
     });
 
     renderProductInfo(product);
-    renderStructuredData(product, galleryImages);
     await loadBundleProducts(product);
     await loadRelatedProducts(product);
-    await initReviews(slug);
+    const reviews = await initReviews(slug);
+    renderStructuredData(product, galleryImages, reviews);
   }
 
   function buildGalleryImages(product) {
@@ -160,17 +161,60 @@ BH.productDetail = (() => {
     meta.content = value;
   }
 
-  function renderStructuredData(product, galleryImages) {
+  function setMetaProperty(selector, attrName, attrValue, content) {
+    if (!content) return;
+    let meta = document.querySelector(selector);
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute(attrName, attrValue);
+      document.head.appendChild(meta);
+    }
+    meta.content = content;
+  }
+
+  function absoluteUrl(url) {
+    return new URL(url, window.location.origin).href;
+  }
+
+  function setSocialMeta(product, galleryImages) {
+    const title = product.meta_title || product.name + ' - Benas Hub';
+    const description = product.meta_description || product.description || product.extended_description || product.name;
+    const image = galleryImages.length ? absoluteUrl(galleryImages[0]) : '';
+    setMetaProperty('meta[property="og:type"]', 'property', 'og:type', 'product');
+    setMetaProperty('meta[property="og:title"]', 'property', 'og:title', title);
+    setMetaProperty('meta[property="og:description"]', 'property', 'og:description', description);
+    setMetaProperty('meta[property="og:url"]', 'property', 'og:url', window.location.href);
+    setMetaProperty('meta[property="og:image"]', 'property', 'og:image', image);
+    setMetaProperty('meta[name="twitter:card"]', 'name', 'twitter:card', image ? 'summary_large_image' : 'summary');
+    setMetaProperty('meta[name="twitter:title"]', 'name', 'twitter:title', title);
+    setMetaProperty('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+    setMetaProperty('meta[name="twitter:image"]', 'name', 'twitter:image', image);
+  }
+
+  function renderStructuredData(product, galleryImages, reviews) {
     const oldScript = document.getElementById('productStructuredData');
     if (oldScript) oldScript.remove();
+    const reviewData = (reviews || []).slice(0, 10).map((review) => ({
+      '@type': 'Review',
+      author: { '@type': 'Person', name: review.customer_name },
+      datePublished: (review.created_at || '').split(' ')[0] || undefined,
+      reviewBody: review.body || undefined,
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: review.rating,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    }));
     const data = {
       '@context': 'https://schema.org',
       '@type': 'Product',
       name: product.name,
-      image: galleryImages.map((url) => new URL(url, window.location.origin).href),
+      image: galleryImages.map(absoluteUrl),
       description: product.meta_description || product.description || product.extended_description || product.name,
       sku: String(product.id),
       brand: { '@type': 'Brand', name: 'Benas Hub' },
+      review: reviewData.length ? reviewData : undefined,
       aggregateRating: product.review_count > 0 ? {
         '@type': 'AggregateRating',
         ratingValue: product.avg_rating,
@@ -185,6 +229,11 @@ BH.productDetail = (() => {
       },
     };
     Object.keys(data).forEach((key) => data[key] === undefined && delete data[key]);
+    if (data.review) {
+      data.review.forEach((review) => {
+        Object.keys(review).forEach((key) => review[key] === undefined && delete review[key]);
+      });
+    }
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.id = 'productStructuredData';
@@ -294,7 +343,7 @@ BH.productDetail = (() => {
 
   async function initReviews(slug) {
     document.getElementById('productReviews').classList.remove('d-none');
-    await loadReviews(slug);
+    const reviews = await loadReviews(slug);
 
     let loggedIn = false;
     try {
@@ -303,7 +352,7 @@ BH.productDetail = (() => {
 
     if (!loggedIn) {
       document.getElementById('reviewLoginPrompt').classList.remove('d-none');
-      return;
+      return reviews;
     }
 
     const form = document.getElementById('reviewForm');
@@ -347,6 +396,7 @@ BH.productDetail = (() => {
         errorEl.classList.remove('d-none');
       }
     });
+    return reviews;
   }
 
   async function loadReviews(slug) {
@@ -356,13 +406,13 @@ BH.productDetail = (() => {
     try {
       data = await BH.api.get('/products/' + encodeURIComponent(slug) + '/reviews');
     } catch (e) {
-      return;
+      return [];
     }
     const reviews = data.reviews;
     if (reviews.length === 0) {
       emptyEl.classList.remove('d-none');
       listEl.innerHTML = '';
-      return;
+      return [];
     }
     emptyEl.classList.add('d-none');
     const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
@@ -386,6 +436,7 @@ BH.productDetail = (() => {
       const form = document.getElementById('reviewForm');
       if (form) form.body.value = mine.body || '';
     }
+    return reviews;
   }
 
   return { init };

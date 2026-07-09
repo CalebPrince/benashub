@@ -250,6 +250,39 @@ def send_admin_new_order_email(db, order, items):
     _send_async(config, config["admin_notify_email"], subject, html, text)
 
 
+def send_low_stock_alert_email(db, products, threshold):
+    config = load_mail_config(db)
+    if config is None or not config["admin_notify_email"] or not products:
+        return
+    subject = f"Low stock alert - {len(products)} product{'s' if len(products) != 1 else ''}"
+    rows = "".join(
+        f"""<tr>
+          <td style="padding:6px 8px;border-bottom:1px solid #eeeeee;">{escape(p["name"])}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #eeeeee;text-align:right;">{p["stock_qty"]}</td>
+        </tr>"""
+        for p in products
+    )
+    html = _layout(
+        "Low stock alert",
+        f"""<p>The following products are at or below the low-stock threshold of
+        <strong>{threshold}</strong>:</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;">
+          <tr>
+            <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #141414;">Product</th>
+            <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #141414;">Stock</th>
+          </tr>
+          {rows}
+        </table>
+        <p>Open the admin panel &gt; Products to restock or deactivate unavailable items.</p>""",
+    )
+    text_rows = "\n".join(f"{p['name']}: {p['stock_qty']} left" for p in products)
+    text = (
+        f"Low stock alert. These products are at or below {threshold} items:\n\n"
+        f"{text_rows}\n\nOpen the admin panel > Products to restock or deactivate unavailable items."
+    )
+    _send_async(config, config["admin_notify_email"], subject, html, text)
+
+
 def send_test_email(db, to_email):
     """Synchronous send used by the admin Settings test button; raises on failure."""
     config = load_mail_config(db)

@@ -67,6 +67,7 @@ BH.admin = (() => {
     const thresholdText = document.getElementById('lowStockThresholdText');
     if (thresholdText) thresholdText.textContent = `Alert threshold: ${stats.low_stock_threshold} items or fewer.`;
     renderLowStock(stats.low_stock);
+    renderLowStockAlerts(stats.low_stock_alerts || []);
   }
 
   function statCard(label, value) {
@@ -113,13 +114,33 @@ BH.admin = (() => {
     const emptyState = document.getElementById('lowStockEmpty');
     if (items.length === 0) {
       emptyState.classList.remove('d-none');
+      list.innerHTML = '';
       return;
     }
+    emptyState.classList.add('d-none');
     list.innerHTML = items.map((p) => `
       <li class="list-group-item d-flex justify-content-between align-items-center px-0">
         <span>${escapeHtml(p.name)}</span>
         <span class="badge bg-danger">${p.stock_qty} left</span>
       </li>
+    `).join('');
+  }
+
+  function renderLowStockAlerts(alerts) {
+    const wrap = document.getElementById('lowStockAlertsWrap');
+    const body = document.getElementById('lowStockAlerts');
+    if (!wrap || !body) return;
+    if (alerts.length === 0) {
+      wrap.classList.add('d-none');
+      body.innerHTML = '';
+      return;
+    }
+    wrap.classList.remove('d-none');
+    body.innerHTML = alerts.map((alert) => `
+      <div class="d-flex justify-content-between gap-3 py-2 border-top">
+        <span>${escapeHtml(alert.product_name)}</span>
+        <span class="text-secondary text-end">${escapeHtml(alert.notified_at || '')}</span>
+      </div>
     `).join('');
   }
 

@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 
 from ..auth import login_required
 from ..db import get_db
+from ..inventory import check_low_stock_alerts
 from ..mailer import send_order_shipped_email, send_test_email
 from ..settings import get_setting, set_setting
 
@@ -121,6 +122,7 @@ def create_product():
             ),
         )
         db.commit()
+        check_low_stock_alerts(db, [cur.lastrowid])
     except sqlite3.IntegrityError:
         return jsonify({"error": "A product with that slug already exists"}), 400
 
@@ -163,6 +165,7 @@ def update_product(product_id):
             ),
         )
         db.commit()
+        check_low_stock_alerts(db, [product_id])
     except sqlite3.IntegrityError:
         return jsonify({"error": "A product with that slug already exists"}), 400
 
@@ -486,10 +489,13 @@ def get_settings():
 def update_settings():
     data = request.get_json(force=True, silent=True) or {}
     db = get_db()
+    threshold_changed = "low_stock_threshold" in data
     for key in SETTINGS_KEYS:
         if key in data:
             set_setting(db, key, (data[key] or "").strip())
     db.commit()
+    if threshold_changed:
+        check_low_stock_alerts(db)
     return jsonify({"ok": True})
 
 
@@ -741,6 +747,7 @@ def delete_discount_code(code_id):
 def get_stats():
     db = get_db()
     low_stock_threshold = int(get_setting(db, "low_stock_threshold", "5") or 5)
+    check_low_stock_alerts(db)
     product_count = db.execute("SELECT COUNT(*) AS c FROM products WHERE is_active = 1").fetchone()["c"]
     order_count = db.execute("SELECT COUNT(*) AS c FROM orders").fetchone()["c"]
     pending_count = db.execute(
@@ -756,6 +763,12 @@ def get_stats():
         "SELECT id, name, stock_qty FROM products WHERE is_active = 1 AND stock_qty <= ? ORDER BY stock_qty",
         (low_stock_threshold,),
     ).fetchall()
+    low_stock_alert_rows = db.execute(
+        """SELECT a.product_id, a.product_name, a.stock_qty, a.threshold, a.notified_at
+           FROM product_low_stock_alerts a
+           WHERE a.resolved_at IS NULL
+           ORDER BY a.notified_at DESC"""
+    ).fetchall()
     recent_order_rows = db.execute(
         "SELECT * FROM orders ORDER BY created_at DESC LIMIT 5"
     ).fetchall()
@@ -769,6 +782,14 @@ def get_stats():
             "customer_count": customer_count,
             "low_stock_threshold": low_stock_threshold,
             "low_stock": [{"id": r["id"], "name": r["name"], "stock_qty": r["stock_qty"]} for r in low_stock_rows],
+            "low_stock_alerts": [
+                {
+                    "product_id": r["product_id"], "product_name": r["product_name"],
+                    "stock_qty": r["stock_qty"], "threshold": r["threshold"],
+                    "notified_at": r["notified_at"],
+                }
+                for r in low_stock_alert_rows
+            ],
             "recent_orders": [
                 {
                     "order_ref": r["order_ref"], "customer_name": r["customer_name"],

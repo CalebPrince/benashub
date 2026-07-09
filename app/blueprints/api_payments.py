@@ -5,6 +5,7 @@ import json
 from flask import Blueprint, jsonify, request
 
 from ..db import get_db
+from ..inventory import check_low_stock_alerts
 from ..mailer import send_admin_new_order_email, send_order_confirmation_email
 from ..payments import get_gateway
 from ..payments.paystack import PaystackError, PaystackNotConfigured
@@ -30,12 +31,39 @@ def _apply_verified_payment(db, reference, result):
         "UPDATE orders SET status = ?, updated_at = datetime('now') WHERE id = ?",
         (order_status, payment["order_id"]),
     )
+
+    order = None
+    items = []
+    affected_product_ids = []
+    if new_status == "success":
+        order = db.execute("SELECT * FROM orders WHERE id = ?", (payment["order_id"],)).fetchone()
+        items = db.execute("SELECT * FROM order_items WHERE order_id = ?", (payment["order_id"],)).fetchall()
+        if order["inventory_deducted_at"] is None:
+            for item in items:
+                if item["product_id"] is None:
+                    continue
+                db.execute(
+                    """UPDATE products
+                       SET stock_qty = CASE
+                           WHEN stock_qty >= ? THEN stock_qty - ?
+                           ELSE 0
+                       END,
+                       updated_at = datetime('now')
+                       WHERE id = ?""",
+                    (item["qty"], item["qty"], item["product_id"]),
+                )
+                affected_product_ids.append(item["product_id"])
+            db.execute(
+                "UPDATE orders SET inventory_deducted_at = datetime('now') WHERE id = ?",
+                (payment["order_id"],),
+            )
+
     db.commit()
 
     if new_status == "success":
         # The already-processed guard above means these send at most once per order.
-        order = db.execute("SELECT * FROM orders WHERE id = ?", (payment["order_id"],)).fetchone()
-        items = db.execute("SELECT * FROM order_items WHERE order_id = ?", (payment["order_id"],)).fetchall()
+        if affected_product_ids:
+            check_low_stock_alerts(db, affected_product_ids)
         send_order_confirmation_email(db, order, items)
         send_admin_new_order_email(db, order, items)
 

@@ -101,6 +101,17 @@ def init_db(app):
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )"""
         )
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS product_low_stock_alerts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+                product_name TEXT NOT NULL,
+                stock_qty INTEGER NOT NULL,
+                threshold INTEGER NOT NULL,
+                notified_at TEXT NOT NULL DEFAULT (datetime('now')),
+                resolved_at TEXT
+            )"""
+        )
         existing_columns = {row["name"] for row in conn.execute("PRAGMA table_info(orders)")}
         if "customer_id" not in existing_columns:
             conn.execute("ALTER TABLE orders ADD COLUMN customer_id INTEGER REFERENCES customers(id)")
@@ -110,6 +121,8 @@ def init_db(app):
             conn.execute("ALTER TABLE orders ADD COLUMN discount_code TEXT")
         if "discount_amount_pesewas" not in existing_columns:
             conn.execute("ALTER TABLE orders ADD COLUMN discount_amount_pesewas INTEGER NOT NULL DEFAULT 0")
+        if "inventory_deducted_at" not in existing_columns:
+            conn.execute("ALTER TABLE orders ADD COLUMN inventory_deducted_at TEXT")
         product_columns = {row["name"] for row in conn.execute("PRAGMA table_info(products)")}
         if "extended_description" not in product_columns:
             conn.execute("ALTER TABLE products ADD COLUMN extended_description TEXT")

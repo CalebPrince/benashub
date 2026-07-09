@@ -1,0 +1,301 @@
+:root {
+  --bh-black: #141414;
+  --bh-black-2: #1e1e1e;
+  --bh-red: #e0263d;
+  --bh-red-dark: #b81f31;
+  --bh-white: #ffffff;
+  --bh-gray-bg: #f7f6f4;
+  --bh-gray-border: #e5e3df;
+}
+
+body {
+  background-color: var(--bh-gray-bg);
+  color: #222;
+}
+
+/* Logo badge (hexagon "bh" mark) */
+.bh-logo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: var(--bh-white);
+  color: var(--bh-black);
+  font-weight: 800;
+  font-size: 1.05rem;
+  line-height: 1;
+  clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+  flex-shrink: 0;
+}
+.bh-logo-badge-lg {
+  width: 64px;
+  height: 64px;
+  font-size: 1.7rem;
+}
+
+.bh-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.bh-brand-title {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--bh-white);
+  font-size: 1rem;
+}
+.bh-brand-sub {
+  font-size: 0.65rem;
+  color: var(--bh-red);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Navbar */
+.bh-navbar {
+  background-color: var(--bh-black) !important;
+  border-bottom: 3px solid var(--bh-red);
+}
+.bh-navbar .nav-link {
+  color: rgba(255, 255, 255, 0.85);
+}
+.bh-navbar .nav-link:hover {
+  color: var(--bh-red);
+}
+.bh-badge-red {
+  background-color: var(--bh-red) !important;
+}
+
+/* Mobile nav drawer (offcanvas) */
+.bh-offcanvas {
+  background-color: var(--bh-black);
+  color: #fff;
+  border-left: 3px solid var(--bh-red);
+}
+.bh-offcanvas .offcanvas-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.bh-offcanvas .nav-link {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+.bh-offcanvas .nav-link:hover {
+  color: var(--bh-red);
+}
+
+/* Buttons */
+.bh-btn-red {
+  background-color: var(--bh-red);
+  border-color: var(--bh-red);
+  color: #fff;
+  font-weight: 600;
+}
+.bh-btn-red:hover, .bh-btn-red:focus {
+  background-color: var(--bh-red-dark);
+  border-color: var(--bh-red-dark);
+  color: #fff;
+}
+.bh-btn-outline-red {
+  background-color: transparent;
+  border: 2px solid var(--bh-red);
+  color: var(--bh-red);
+  font-weight: 600;
+}
+.bh-btn-outline-red:hover {
+  background-color: var(--bh-red);
+  color: #fff;
+}
+.bh-spinner { color: var(--bh-red); }
+
+/* Hero */
+.bh-hero {
+  position: relative;
+  background-color: var(--bh-black);
+  color: #fff;
+  overflow: hidden;
+}
+.bh-hero-hexagons {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 320px;
+  height: 320px;
+  opacity: 0.18;
+  background-image: radial-gradient(circle at 25% 25%, transparent 10px, var(--bh-white) 11px, var(--bh-white) 12px, transparent 13px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.bh-eyebrow {
+  color: var(--bh-red);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+.bh-hero-title {
+  font-weight: 800;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+.bh-hero-text {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.bh-section-title {
+  font-weight: 800;
+  color: var(--bh-black);
+  border-left: 5px solid var(--bh-red);
+  padding-left: 0.75rem;
+}
+
+.bh-page-header {
+  background-color: var(--bh-black);
+}
+.bh-page-title {
+  color: #fff;
+  font-weight: 800;
+  margin: 0;
+}
+
+/* Product cards */
+.bh-product-card {
+  background: #fff;
+  border: 1px solid var(--bh-gray-border);
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.bh-product-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+.bh-product-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: var(--bh-gray-bg);
+}
+.bh-product-card .card-body {
+  padding: 1rem;
+}
+.bh-product-name {
+  font-weight: 600;
+  color: var(--bh-black);
+  text-decoration: none;
+}
+.bh-product-price {
+  color: var(--bh-red);
+  font-weight: 700;
+}
+.bh-badge-intl {
+  background-color: var(--bh-black);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+/* Category tiles */
+.bh-category-tile {
+  display: block;
+  background: var(--bh-black);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 1.25rem;
+  text-align: center;
+  font-weight: 700;
+  border-bottom: 3px solid var(--bh-red);
+  transition: transform 0.15s ease;
+}
+.bh-category-tile:hover {
+  color: var(--bh-red);
+  transform: translateY(-2px);
+}
+
+/* Filter / summary cards */
+.bh-filter-card, .bh-summary-card {
+  background: #fff;
+  border: 1px solid var(--bh-gray-border);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+.bh-footer-heading {
+  color: var(--bh-red);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* Table */
+.bh-table thead {
+  background-color: var(--bh-black);
+  color: #fff;
+}
+.bh-table img.bh-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Footer */
+.bh-footer {
+  background-color: var(--bh-black);
+  color: #fff;
+}
+.bh-footer-link {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+}
+.bh-footer-link:hover {
+  color: var(--bh-red);
+}
+
+/* Confirmation */
+.bh-confirmation-icon {
+  width: 72px;
+  height: 72px;
+  line-height: 72px;
+  border-radius: 50%;
+  background-color: var(--bh-red);
+  color: #fff;
+  font-size: 2rem;
+  margin: 0 auto;
+}
+
+/* Admin */
+.bh-admin-login-body {
+  background-color: var(--bh-black);
+  min-height: 100vh;
+}
+.bh-login-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+}
+.bh-admin-body {
+  background-color: var(--bh-gray-bg);
+}
+.bh-admin-tabs .nav-link {
+  color: #555;
+  font-weight: 600;
+}
+.bh-admin-tabs .nav-link.active {
+  color: var(--bh-red);
+  border-color: var(--bh-gray-border) var(--bh-gray-border) #fff;
+}
+.bh-image-preview {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--bh-gray-border);
+}

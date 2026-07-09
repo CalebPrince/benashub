@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="bh-hero">
+  <div class="bh-hero-hexagons" aria-hidden="true"></div>
+  <div class="container py-5">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <p class="bh-eyebrow">Products &amp; Services</p>
+        <h1 class="bh-hero-title">Organic household &amp; health products, delivered.</h1>
+        <p class="bh-hero-text">Benas Hub distributes organic household and health products across Ghana &mdash; and ships select items abroad.</p>
+        <a href="{{ url_for('pages.catalog') }}" class="btn btn-lg bh-btn-red">Shop Now</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container py-5">
+  <h2 class="bh-section-title mb-4">Shop by Category</h2>
+  <div id="categoryTiles" class="row g-3"></div>
+</section>
+
+<section class="container py-5">
+  <h2 class="bh-section-title mb-4">Featured Products</h2>
+  <div id="featuredProducts" class="row g-4"></div>
+</section>
+
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/products.js') }}"></script>
+<script>document.addEventListener('DOMContentLoaded', () => BH.products.initHome());</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Your Cart &mdash; Benas Hub{% endblock %}
+{% block content %}
+
+<section class="bh-page-header">
+  <div class="container py-4">
+    <h1 class="bh-page-title">Your Cart</h1>
+  </div>
+</section>
+
+<section class="container py-4">
+  <div id="cartEmptyState" class="text-center text-secondary py-5 d-none">
+    <p>Your cart is empty.</p>
+    <a href="{{ url_for('pages.catalog') }}" class="btn bh-btn-red">Continue Shopping</a>
+  </div>
+
+  <div id="cartContent" class="row g-4 d-none">
+    <div class="col-lg-8">
+      <div class="table-responsive">
+        <table class="table align-middle bh-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th>Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="cartItemsBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="bh-summary-card">
+        <h5 class="mb-3">Order Summary</h5>
+        <div class="d-flex justify-content-between mb-2">
+          <span>Subtotal</span>
+          <span id="cartSubtotal">GHS 0.00</span>
+        </div>
+        <p class="small text-secondary">Shipping is calculated at checkout.</p>
+        <a href="{{ url_for('pages.checkout') }}" class="btn bh-btn-red w-100">Proceed to Checkout</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

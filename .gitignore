@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+benashub.db
+static/img/products/*
+!static/img/products/placeholder.svg

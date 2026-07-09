@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Product &mdash; Benas Hub{% endblock %}
+{% block content %}
+
+<section class="container py-5">
+  <div id="productDetail" class="row g-5"></div>
+
+  <div id="productNotFound" class="text-center text-secondary py-5 d-none">
+    <p>Sorry, this product could not be found.</p>
+    <a href="{{ url_for('pages.catalog') }}" class="btn bh-btn-red">Back to Shop</a>
+  </div>
+</section>
+
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/shipping.js') }}"></script>
+<script src="{{ url_for('static', filename='js/product-detail.js') }}"></script>
+<script>document.addEventListener('DOMContentLoaded', () => BH.productDetail.init());</script>
+{% endblock %}

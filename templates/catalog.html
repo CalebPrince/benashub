@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Shop &mdash; Benas Hub{% endblock %}
+{% block content %}
+
+<section class="bh-page-header">
+  <div class="container py-4">
+    <h1 class="bh-page-title">Shop</h1>
+  </div>
+</section>
+
+<section class="container py-4">
+  <div class="row">
+    <div class="col-lg-3 mb-4">
+      <div class="bh-filter-card">
+        <h6 class="text-uppercase bh-footer-heading">Category</h6>
+        <div id="categoryFilterList" class="list-group list-group-flush"></div>
+      </div>
+    </div>
+    <div class="col-lg-9">
+      <div id="catalogEmptyState" class="text-center text-secondary py-5 d-none">
+        <p>No products found. Try a different search or category.</p>
+      </div>
+      <div id="catalogGrid" class="row g-4"></div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/products.js') }}"></script>
+<script>document.addEventListener('DOMContentLoaded', () => BH.products.initCatalog());</script>
+{% endblock %}

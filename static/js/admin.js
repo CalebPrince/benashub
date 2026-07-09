@@ -616,16 +616,42 @@ BH.admin = (() => {
     await loadSettings();
   }
 
+  const SETTINGS_FIELDS = [
+    'paystack_secret_key', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
+    'smtp_encryption', 'mail_from_name', 'mail_from_email', 'admin_notify_email',
+  ];
+
   function wireSettingsTab() {
-    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+    const form = document.getElementById('settingsForm');
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      await saveSettings(e.target);
+      await saveSettings(form);
+    });
+    document.getElementById('testEmailBtn').addEventListener('click', async () => {
+      const resultEl = document.getElementById('testEmailResult');
+      resultEl.classList.add('d-none');
+      // Save first so the test uses what's on screen.
+      await saveSettings(form);
+      try {
+        await BH.api.post('/admin/settings/test-email', {
+          to: document.getElementById('testEmailInput').value.trim(),
+        });
+        resultEl.textContent = 'Test email sent — check the inbox (and spam folder).';
+        resultEl.className = 'small mt-2 text-success';
+      } catch (err) {
+        resultEl.textContent = err.message;
+        resultEl.className = 'small mt-2 text-danger';
+      }
     });
   }
 
   async function loadSettings() {
     const settings = await BH.api.get('/admin/settings');
-    document.getElementById('paystackSecretKeyInput').value = settings.paystack_secret_key || '';
+    const form = document.getElementById('settingsForm');
+    SETTINGS_FIELDS.forEach((key) => {
+      if (form.elements[key]) form.elements[key].value = settings[key] || '';
+    });
+    if (!settings.smtp_encryption) form.elements.smtp_encryption.value = 'tls';
   }
 
   async function saveSettings(form) {
@@ -635,10 +661,10 @@ BH.admin = (() => {
     errorEl.classList.add('d-none');
 
     const formData = new FormData(form);
+    const payload = {};
+    SETTINGS_FIELDS.forEach((key) => { payload[key] = formData.get(key); });
     try {
-      await BH.api.put('/admin/settings', {
-        paystack_secret_key: formData.get('paystack_secret_key'),
-      });
+      await BH.api.put('/admin/settings', payload);
       savedEl.classList.remove('d-none');
     } catch (err) {
       errorEl.textContent = err.message;

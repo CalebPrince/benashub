@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 
 from ..auth import login_required
 from ..db import get_db
+from ..mailer import send_test_email
 from ..settings import get_setting, set_setting
 
 api_admin_bp = Blueprint("api_admin", __name__)
@@ -385,17 +386,26 @@ def update_shipping_rate(rate_id):
     return jsonify(rate_dict(row))
 
 
-# --- settings (payment gateway keys, etc.) ---
+# --- settings (payment gateway keys, email/SMTP, etc.) ---
+
+SETTINGS_KEYS = (
+    "paystack_secret_key",
+    "smtp_host",
+    "smtp_port",
+    "smtp_username",
+    "smtp_password",
+    "smtp_encryption",
+    "mail_from_name",
+    "mail_from_email",
+    "admin_notify_email",
+)
+
 
 @api_admin_bp.route("/settings", methods=["GET"])
 @login_required
 def get_settings():
     db = get_db()
-    return jsonify(
-        {
-            "paystack_secret_key": get_setting(db, "paystack_secret_key", "") or "",
-        }
-    )
+    return jsonify({key: get_setting(db, key, "") or "" for key in SETTINGS_KEYS})
 
 
 @api_admin_bp.route("/settings", methods=["PUT"])
@@ -403,9 +413,24 @@ def get_settings():
 def update_settings():
     data = request.get_json(force=True, silent=True) or {}
     db = get_db()
-    if "paystack_secret_key" in data:
-        set_setting(db, "paystack_secret_key", (data["paystack_secret_key"] or "").strip())
+    for key in SETTINGS_KEYS:
+        if key in data:
+            set_setting(db, key, (data[key] or "").strip())
     db.commit()
+    return jsonify({"ok": True})
+
+
+@api_admin_bp.route("/settings/test-email", methods=["POST"])
+@login_required
+def settings_test_email():
+    data = request.get_json(force=True, silent=True) or {}
+    to_email = (data.get("to") or "").strip()
+    if not to_email:
+        return jsonify({"error": "Enter an address to send the test email to"}), 400
+    try:
+        send_test_email(get_db(), to_email)
+    except Exception as e:
+        return jsonify({"error": f"Test email failed: {e}"}), 502
     return jsonify({"ok": True})
 
 

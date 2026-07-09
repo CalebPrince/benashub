@@ -5,6 +5,7 @@ import json
 from flask import Blueprint, jsonify, request
 
 from ..db import get_db
+from ..mailer import send_admin_new_order_email, send_order_confirmation_email
 from ..payments import get_gateway
 from ..payments.paystack import PaystackError, PaystackNotConfigured
 from ..settings import get_setting
@@ -30,6 +31,14 @@ def _apply_verified_payment(db, reference, result):
         (order_status, payment["order_id"]),
     )
     db.commit()
+
+    if new_status == "success":
+        # The already-processed guard above means these send at most once per order.
+        order = db.execute("SELECT * FROM orders WHERE id = ?", (payment["order_id"],)).fetchone()
+        items = db.execute("SELECT * FROM order_items WHERE order_id = ?", (payment["order_id"],)).fetchall()
+        send_order_confirmation_email(db, order, items)
+        send_admin_new_order_email(db, order, items)
+
     return payment
 
 

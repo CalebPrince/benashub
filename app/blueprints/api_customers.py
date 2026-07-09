@@ -6,6 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..customer_auth import customer_login_required
 from ..db import get_db
+from ..mailer import send_welcome_email
 
 api_customers_bp = Blueprint("api_customers", __name__)
 
@@ -48,6 +49,7 @@ def register():
 
     row = db.execute("SELECT * FROM customers WHERE id = ?", (cur.lastrowid,)).fetchone()
     session["customer_id"] = row["id"]
+    send_welcome_email(db, name, email)
     return jsonify(customer_dict(row)), 201
 
 

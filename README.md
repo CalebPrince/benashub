@@ -63,6 +63,7 @@ Every storefront page has a black top utility bar (desktop) with the product sea
 ## Notes
 
 - **Payment keys live in the database, not in files**: the Paystack secret key is set via Admin > Settings and stored in the `settings` table. It is never committed to source control or exposed to the storefront.
+- **Emails (SMTP)**: configure your mail server under Admin > Settings > Email (SMTP) — works with Gmail, Zoho, or your hosting provider's mail server, and there's a "Send Test" button to verify. Once set, the site sends a welcome email on customer registration, an order confirmation to the customer when payment succeeds, and (optionally) a new-order notification to the admin email. Leave the SMTP host empty to disable all emails.
 - **Placeholder data**: the seeded product catalog is fictional. Replace it with real inventory via the admin panel before going live.
 - **Placeholder logo**: no logo file was supplied, so a CSS "bh" badge is used. See `static/img/logo/README.txt` to swap in the real logo.
 - **Paystack webhook**: for production, configure a webhook in the Paystack dashboard pointing to `/api/payments/paystack/webhook` so payments still get confirmed even if a customer closes the tab after paying.

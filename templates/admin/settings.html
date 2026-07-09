@@ -4,23 +4,77 @@
 
 <h3 class="mb-4">Settings</h3>
 
-<div class="row">
-  <div class="col-lg-6">
-    <div class="bh-filter-card">
-      <h5 class="mb-3">Payment &mdash; Paystack</h5>
-      <p class="text-secondary small">Get your secret key from your Paystack dashboard under Settings &gt; API Keys &amp; Webhooks. Use a test key (<code>sk_test_...</code>) while testing, and switch to a live key (<code>sk_live_...</code>) when you're ready to accept real payments.</p>
-      <div id="settingsSaved" class="alert alert-success d-none">Saved.</div>
-      <div id="settingsError" class="alert alert-danger d-none"></div>
-      <form id="settingsForm">
+<div id="settingsSaved" class="alert alert-success d-none">Saved.</div>
+<div id="settingsError" class="alert alert-danger d-none"></div>
+
+<form id="settingsForm">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="bh-filter-card">
+        <h5 class="mb-3">Payment &mdash; Paystack</h5>
+        <p class="text-secondary small">Get your secret key from your Paystack dashboard under Settings &gt; API Keys &amp; Webhooks. Use a test key (<code>sk_test_...</code>) while testing, and switch to a live key (<code>sk_live_...</code>) when you're ready to accept real payments.</p>
         <div class="mb-3">
           <label class="form-label">Paystack Secret Key</label>
           <input type="password" class="form-control" name="paystack_secret_key" id="paystackSecretKeyInput" placeholder="sk_test_..." autocomplete="off">
         </div>
-        <button type="submit" class="btn bh-btn-red">Save Settings</button>
-      </form>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="bh-filter-card">
+        <h5 class="mb-3">Email (SMTP)</h5>
+        <p class="text-secondary small">Used for order confirmations, welcome emails, and admin notifications. Works with any SMTP provider (Gmail, Zoho, your hosting provider's mail server, etc.). Leave the host empty to disable emails.</p>
+        <div class="row g-3">
+          <div class="col-8">
+            <label class="form-label">SMTP Host</label>
+            <input type="text" class="form-control" name="smtp_host" placeholder="smtp.gmail.com" autocomplete="off">
+          </div>
+          <div class="col-4">
+            <label class="form-label">Port</label>
+            <input type="number" class="form-control" name="smtp_port" placeholder="587">
+          </div>
+          <div class="col-8">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-control" name="smtp_username" autocomplete="off">
+          </div>
+          <div class="col-4">
+            <label class="form-label">Encryption</label>
+            <select class="form-select" name="smtp_encryption">
+              <option value="tls">TLS (587)</option>
+              <option value="ssl">SSL (465)</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" name="smtp_password" autocomplete="off">
+          </div>
+          <div class="col-6">
+            <label class="form-label">From Name</label>
+            <input type="text" class="form-control" name="mail_from_name" placeholder="Benas Hub">
+          </div>
+          <div class="col-6">
+            <label class="form-label">From Email</label>
+            <input type="email" class="form-control" name="mail_from_email" placeholder="orders@benashub.com">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Admin Notification Email</label>
+            <input type="email" class="form-control" name="admin_notify_email" placeholder="benas4real@gmail.com">
+            <div class="form-text">Gets an email whenever a new order is paid. Leave empty to skip.</div>
+          </div>
+        </div>
+        <hr>
+        <div class="d-flex gap-2 align-items-start">
+          <input type="email" class="form-control form-control-sm" id="testEmailInput" placeholder="Send a test to&hellip;">
+          <button type="button" class="btn btn-outline-dark btn-sm text-nowrap" id="testEmailBtn">Send Test</button>
+        </div>
+        <div id="testEmailResult" class="small mt-2 d-none"></div>
+      </div>
     </div>
   </div>
-</div>
+  <div class="mt-4">
+    <button type="submit" class="btn bh-btn-red">Save Settings</button>
+  </div>
+</form>
 
 {% endblock %}
 {% block extra_scripts %}

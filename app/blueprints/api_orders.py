@@ -20,7 +20,31 @@ def normalize_discount_code(code):
     return (code or "").strip().upper()
 
 
-def get_discount_for_subtotal(db, code, subtotal):
+PAID_ORDER_STATUSES = ("paid", "processing", "shipped", "completed")
+
+
+def customer_has_paid_order(db, customer_id=None, customer_email=None):
+    clauses = []
+    params = []
+    if customer_id:
+        clauses.append("customer_id = ?")
+        params.append(customer_id)
+    if customer_email:
+        clauses.append("lower(customer_email) = ?")
+        params.append(customer_email.strip().lower())
+    if not clauses:
+        return False
+    status_placeholders = ",".join("?" for _ in PAID_ORDER_STATUSES)
+    row = db.execute(
+        f"""SELECT COUNT(*) AS c FROM orders
+            WHERE status IN ({status_placeholders})
+              AND ({" OR ".join(clauses)})""",
+        [*PAID_ORDER_STATUSES, *params],
+    ).fetchone()
+    return row["c"] > 0
+
+
+def get_discount_for_subtotal(db, code, subtotal, customer_id=None, customer_email=None):
     normalized = normalize_discount_code(code)
     if not normalized:
         return None, 0, None
@@ -35,6 +59,11 @@ def get_discount_for_subtotal(db, code, subtotal):
     if subtotal < discount["min_subtotal_pesewas"]:
         minimum = discount["min_subtotal_pesewas"] / 100
         return None, 0, f"Discount code requires a subtotal of at least GHS {minimum:.2f}"
+    if discount["first_order_only"]:
+        if not customer_id and not customer_email:
+            return None, 0, "Enter your email before applying this first-order code"
+        if customer_has_paid_order(db, customer_id, customer_email):
+            return None, 0, "This discount code is only for first orders"
 
     if discount["kind"] == "percent":
         amount = round(subtotal * discount["value"] / 100)
@@ -50,7 +79,11 @@ def validate_discount_code():
         subtotal = int(data.get("subtotal_pesewas", 0))
     except (TypeError, ValueError):
         return jsonify({"error": "Invalid subtotal"}), 400
-    discount, amount, error = get_discount_for_subtotal(get_db(), data.get("code"), subtotal)
+    discount, amount, error = get_discount_for_subtotal(
+        get_db(), data.get("code"), subtotal,
+        customer_id=session.get("customer_id"),
+        customer_email=data.get("customer_email"),
+    )
     if error:
         return jsonify({"error": error}), 400
     if discount is None:
@@ -132,7 +165,11 @@ def create_order():
     discount = None
     discount_amount = 0
     if discount_code:
-        discount, discount_amount, discount_error = get_discount_for_subtotal(db, discount_code, subtotal)
+        discount, discount_amount, discount_error = get_discount_for_subtotal(
+            db, discount_code, subtotal,
+            customer_id=session.get("customer_id"),
+            customer_email=customer_email,
+        )
         if discount_error:
             return jsonify({"error": discount_error}), 400
 

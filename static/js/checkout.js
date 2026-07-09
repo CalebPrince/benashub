@@ -125,9 +125,11 @@ BH.checkout = (() => {
     if (!code) return;
 
     try {
+      const customerEmail = document.getElementById('checkoutFormEl').customer_email.value.trim();
       currentDiscount = await BH.api.post('/discount-codes/validate', {
         code,
         subtotal_pesewas: BH.cart.getSubtotalPesewas(),
+        customer_email: customerEmail,
       });
       input.value = currentDiscount.code;
       message.textContent = 'Discount applied.';

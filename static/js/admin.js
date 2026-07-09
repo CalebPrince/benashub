@@ -650,6 +650,7 @@ BH.admin = (() => {
       <tr>
         <td><strong>${escapeHtml(c.code)}</strong></td>
         <td>${c.kind === 'percent' ? c.value + '%' : formatMoney(c.value)}</td>
+        <td>${c.first_order_only ? '<span class="badge bg-info text-dark">First order</span>' : '<span class="text-secondary small">Standard</span>'}</td>
         <td>${formatMoney(c.min_subtotal_pesewas)}</td>
         <td>${c.used_count}${c.max_uses ? ' / ' + c.max_uses : ''}</td>
         <td>${escapeHtml(c.expires_at || 'Never')}</td>
@@ -692,8 +693,10 @@ BH.admin = (() => {
       form.querySelector('input[name="max_uses"]').value = code.max_uses || '';
       form.querySelector('input[name="expires_at"]').value = code.expires_at || '';
       form.querySelector('input[name="is_active"]').checked = code.is_active;
+      form.querySelector('input[name="first_order_only"]').checked = code.first_order_only;
     } else {
       form.querySelector('input[name="is_active"]').checked = true;
+      form.querySelector('input[name="first_order_only"]').checked = false;
       form.querySelector('select[name="kind"]').value = 'percent';
       form.querySelector('input[name="min_subtotal_ghs"]').value = '0';
     }
@@ -716,6 +719,7 @@ BH.admin = (() => {
       min_subtotal_pesewas: Math.round(parseFloat(formData.get('min_subtotal_ghs') || '0') * 100),
       max_uses: formData.get('max_uses'),
       expires_at: formData.get('expires_at'),
+      first_order_only: form.querySelector('input[name="first_order_only"]').checked,
       is_active: form.querySelector('input[name="is_active"]').checked,
     };
 

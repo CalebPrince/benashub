@@ -647,7 +647,8 @@ def discount_code_dict(row):
     return {
         "id": row["id"], "code": row["code"], "kind": row["kind"], "value": row["value"],
         "min_subtotal_pesewas": row["min_subtotal_pesewas"], "max_uses": row["max_uses"],
-        "used_count": row["used_count"], "is_active": bool(row["is_active"]),
+        "used_count": row["used_count"], "first_order_only": bool(row["first_order_only"]),
+        "is_active": bool(row["is_active"]),
         "expires_at": row["expires_at"], "created_at": row["created_at"],
     }
 
@@ -681,10 +682,11 @@ def create_discount_code():
     try:
         cur = db.execute(
             """INSERT INTO discount_codes
-               (code, kind, value, min_subtotal_pesewas, max_uses, is_active, expires_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+               (code, kind, value, min_subtotal_pesewas, max_uses, first_order_only, is_active, expires_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 code, kind, value, int(data.get("min_subtotal_pesewas") or 0), max_uses,
+                1 if data.get("first_order_only") else 0,
                 1 if data.get("is_active", True) else 0, data.get("expires_at") or None,
             ),
         )
@@ -717,10 +719,11 @@ def update_discount_code(code_id):
     try:
         db.execute(
             """UPDATE discount_codes SET code=?, kind=?, value=?, min_subtotal_pesewas=?,
-               max_uses=?, is_active=?, expires_at=? WHERE id=?""",
+               max_uses=?, first_order_only=?, is_active=?, expires_at=? WHERE id=?""",
             (
                 code, kind, value, int(data.get("min_subtotal_pesewas", existing["min_subtotal_pesewas"]) or 0),
-                max_uses, 1 if data.get("is_active", existing["is_active"]) else 0,
+                max_uses, 1 if data.get("first_order_only", existing["first_order_only"]) else 0,
+                1 if data.get("is_active", existing["is_active"]) else 0,
                 data.get("expires_at") or None, code_id,
             ),
         )

@@ -13,7 +13,7 @@
 <div class="table-responsive">
   <table class="table align-middle bh-table">
     <thead>
-      <tr><th>Code</th><th>Discount</th><th>Minimum</th><th>Uses</th><th>Expires</th><th>Active</th><th></th></tr>
+      <tr><th>Code</th><th>Discount</th><th>Rules</th><th>Minimum</th><th>Uses</th><th>Expires</th><th>Active</th><th></th></tr>
     </thead>
     <tbody id="discountCodesTableBody"></tbody>
   </table>
@@ -64,6 +64,10 @@
           <div class="form-check">
             <input class="form-check-input" type="checkbox" name="is_active" id="discountCodeActiveCheck" checked>
             <label class="form-check-label" for="discountCodeActiveCheck">Active</label>
+          </div>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="first_order_only" id="discountCodeFirstOrderCheck">
+            <label class="form-check-label" for="discountCodeFirstOrderCheck">First order only</label>
           </div>
         </div>
         <div class="modal-footer">

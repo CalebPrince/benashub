@@ -79,8 +79,8 @@ def seed(conn, config):
 
     cur.execute(
         """INSERT INTO discount_codes
-           (code, kind, value, min_subtotal_pesewas, max_uses, is_active)
-           VALUES ('WELCOME10', 'percent', 10, 5000, 100, 1)"""
+           (code, kind, value, min_subtotal_pesewas, max_uses, first_order_only, is_active)
+           VALUES ('WELCOME10', 'percent', 10, 5000, 100, 1, 1)"""
     )
 
     admin_username = config.get("ADMIN_USERNAME", "admin")

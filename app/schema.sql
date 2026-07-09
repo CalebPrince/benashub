@@ -61,6 +61,7 @@ CREATE TABLE discount_codes (
     min_subtotal_pesewas INTEGER NOT NULL DEFAULT 0,
     max_uses INTEGER,
     used_count INTEGER NOT NULL DEFAULT 0,
+    first_order_only INTEGER NOT NULL DEFAULT 0,
     is_active INTEGER NOT NULL DEFAULT 1,
     expires_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))

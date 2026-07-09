@@ -77,6 +77,7 @@ def init_db(app):
                 min_subtotal_pesewas INTEGER NOT NULL DEFAULT 0,
                 max_uses INTEGER,
                 used_count INTEGER NOT NULL DEFAULT 0,
+                first_order_only INTEGER NOT NULL DEFAULT 0,
                 is_active INTEGER NOT NULL DEFAULT 1,
                 expires_at TEXT,
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -123,6 +124,10 @@ def init_db(app):
             conn.execute("ALTER TABLE orders ADD COLUMN discount_amount_pesewas INTEGER NOT NULL DEFAULT 0")
         if "inventory_deducted_at" not in existing_columns:
             conn.execute("ALTER TABLE orders ADD COLUMN inventory_deducted_at TEXT")
+        discount_columns = {row["name"] for row in conn.execute("PRAGMA table_info(discount_codes)")}
+        if "first_order_only" not in discount_columns:
+            conn.execute("ALTER TABLE discount_codes ADD COLUMN first_order_only INTEGER NOT NULL DEFAULT 0")
+            conn.execute("UPDATE discount_codes SET first_order_only = 1 WHERE upper(code) = 'WELCOME10'")
         product_columns = {row["name"] for row in conn.execute("PRAGMA table_info(products)")}
         if "extended_description" not in product_columns:
             conn.execute("ALTER TABLE products ADD COLUMN extended_description TEXT")
@@ -149,6 +154,18 @@ def init_db(app):
             conn.execute("ALTER TABLE reviews ADD COLUMN admin_reply TEXT")
         conn.commit()
 
+    default_settings = {
+        "home_promo_enabled": "1",
+        "home_promo_text": "Use WELCOME10 for 10% off your first order",
+        "home_promo_link_text": "Shop now",
+        "home_promo_link_url": "/catalog",
+    }
+    for key, value in default_settings.items():
+        conn.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (key, value),
+        )
+    conn.commit()
     conn.close()
 
 

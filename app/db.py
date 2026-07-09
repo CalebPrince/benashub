@@ -56,6 +56,16 @@ def init_db(app):
                 updated_at TEXT NOT NULL DEFAULT (datetime('now'))
             )"""
         )
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS password_resets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+                token_hash TEXT NOT NULL UNIQUE,
+                expires_at TEXT NOT NULL,
+                used_at TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )"""
+        )
         existing_columns = {row["name"] for row in conn.execute("PRAGMA table_info(orders)")}
         if "customer_id" not in existing_columns:
             conn.execute("ALTER TABLE orders ADD COLUMN customer_id INTEGER REFERENCES customers(id)")

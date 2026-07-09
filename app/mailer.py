@@ -174,6 +174,60 @@ Shipping: {_format_money(order["shipping_cost_pesewas"])}<br>
     _send_async(config, order["customer_email"], subject, html, text)
 
 
+def send_order_shipped_email(db, order, items):
+    config = load_mail_config(db)
+    if config is None:
+        return
+    subject = f"Your order has shipped — {order['order_ref']}"
+    html = _layout(
+        "Your order is on its way",
+        f"""<p>Hi {escape(order["customer_name"])},</p>
+        <p>Good news — your order <strong>{order["order_ref"]}</strong> has shipped and is
+        on its way to:</p>
+        <p style="color:#555555;">{escape(order["shipping_address"])}, {escape(order["shipping_city"])}, {escape(order["shipping_country"])}</p>
+        {_order_items_html(items)}
+        <p>Questions about your delivery? Reply to this email or call +233 55 588 3070.</p>""",
+    )
+    text = (
+        f"Hi {order['customer_name']},\n\n"
+        f"Good news — your order {order['order_ref']} has shipped and is on its way to:\n"
+        f"{order['shipping_address']}, {order['shipping_city']}, {order['shipping_country']}\n\n"
+        f"{_order_items_text(items)}\n\n"
+        "Questions about your delivery? Reply to this email or call +233 55 588 3070."
+    )
+    _send_async(config, order["customer_email"], subject, html, text)
+
+
+def send_password_reset_email(db, name, to_email, reset_url):
+    config = load_mail_config(db)
+    if config is None:
+        return
+    first_name = name.split(" ")[0] if name else "there"
+    subject = "Reset your Benas Hub password"
+    html = _layout(
+        "Reset your password",
+        f"""<p>Hi {escape(first_name)},</p>
+        <p>We received a request to reset the password for your Benas Hub account.
+        Click the button below to choose a new one. This link expires in 1 hour.</p>
+        <p style="margin:24px 0;">
+          <a href="{escape(reset_url)}" style="background:#e0263d;color:#ffffff;text-decoration:none;
+             padding:10px 24px;font-weight:bold;display:inline-block;">Reset Password</a>
+        </p>
+        <p style="color:#888888;font-size:12px;">If the button doesn't work, copy this link into
+        your browser:<br>{escape(reset_url)}</p>
+        <p>If you didn't request this, you can safely ignore this email — your password
+        won't change.</p>""",
+    )
+    text = (
+        f"Hi {first_name},\n\n"
+        "We received a request to reset the password for your Benas Hub account. "
+        "Open this link to choose a new one (expires in 1 hour):\n\n"
+        f"{reset_url}\n\n"
+        "If you didn't request this, you can safely ignore this email — your password won't change."
+    )
+    _send_async(config, to_email, subject, html, text)
+
+
 def send_admin_new_order_email(db, order, items):
     config = load_mail_config(db)
     if config is None or not config["admin_notify_email"]:

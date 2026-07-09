@@ -42,6 +42,18 @@ def account_register():
     return render_template("account/register.html")
 
 
+@pages_bp.route("/account/forgot-password")
+def account_forgot_password():
+    if session.get("customer_id"):
+        return redirect(url_for("pages.account_dashboard"))
+    return render_template("account/forgot_password.html")
+
+
+@pages_bp.route("/account/reset-password")
+def account_reset_password():
+    return render_template("account/reset_password.html")
+
+
 @pages_bp.route("/account")
 def account_dashboard():
     if not session.get("customer_id"):

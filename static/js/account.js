@@ -53,6 +53,54 @@ BH.account = (() => {
     });
   }
 
+  function initForgotPassword() {
+    const form = document.getElementById('forgotPasswordForm');
+    const errorEl = document.getElementById('forgotError');
+    const sentEl = document.getElementById('forgotSent');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.classList.add('d-none');
+      try {
+        await BH.api.post('/customers/password-reset/request', {
+          email: new FormData(form).get('email'),
+        });
+        sentEl.classList.remove('d-none');
+        form.classList.add('d-none');
+      } catch (err) {
+        errorEl.textContent = err.message || 'Could not send reset link';
+        errorEl.classList.remove('d-none');
+      }
+    });
+  }
+
+  function initResetPassword() {
+    const form = document.getElementById('resetPasswordForm');
+    const errorEl = document.getElementById('resetError');
+    const doneEl = document.getElementById('resetDone');
+    const token = new URLSearchParams(window.location.search).get('token') || '';
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.classList.add('d-none');
+      const formData = new FormData(form);
+      if (formData.get('password') !== formData.get('confirm_password')) {
+        errorEl.textContent = 'Passwords do not match';
+        errorEl.classList.remove('d-none');
+        return;
+      }
+      try {
+        await BH.api.post('/customers/password-reset/confirm', {
+          token,
+          password: formData.get('password'),
+        });
+        doneEl.classList.remove('d-none');
+        form.classList.add('d-none');
+      } catch (err) {
+        errorEl.textContent = err.message || 'Could not reset password';
+        errorEl.classList.remove('d-none');
+      }
+    });
+  }
+
   async function initDashboard() {
     let me;
     try {
@@ -125,5 +173,5 @@ BH.account = (() => {
     `).join('');
   }
 
-  return { initLogin, initRegister, initDashboard };
+  return { initLogin, initRegister, initDashboard, initForgotPassword, initResetPassword };
 })();

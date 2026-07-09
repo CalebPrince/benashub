@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 
 from ..auth import login_required
 from ..db import get_db
-from ..mailer import send_test_email
+from ..mailer import send_order_shipped_email, send_test_email
 from ..settings import get_setting, set_setting
 
 api_admin_bp = Blueprint("api_admin", __name__)
@@ -313,6 +313,12 @@ def update_order(order_id):
         (status, admin_notes, order_id),
     )
     db.commit()
+
+    if status == "shipped" and existing["status"] != "shipped":
+        order = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+        items = db.execute("SELECT * FROM order_items WHERE order_id = ?", (order_id,)).fetchall()
+        send_order_shipped_email(db, order, items)
+
     return jsonify({"ok": True})
 
 

@@ -1,12 +1,14 @@
+import hashlib
 import re
+import secrets
 import sqlite3
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..customer_auth import customer_login_required
 from ..db import get_db
-from ..mailer import send_welcome_email
+from ..mailer import load_mail_config, send_password_reset_email, send_welcome_email
 
 api_customers_bp = Blueprint("api_customers", __name__)
 
@@ -66,6 +68,67 @@ def login():
 
     session["customer_id"] = row["id"]
     return jsonify(customer_dict(row))
+
+
+@api_customers_bp.route("/password-reset/request", methods=["POST"])
+def password_reset_request():
+    data = request.get_json(force=True, silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    if not email or not EMAIL_RE.match(email):
+        return jsonify({"error": "Enter a valid email address"}), 400
+
+    db = get_db()
+    if load_mail_config(db) is None:
+        return (
+            jsonify({"error": "Password reset emails aren't available right now. Please contact us for help."}),
+            503,
+        )
+
+    row = db.execute("SELECT * FROM customers WHERE email = ?", (email,)).fetchone()
+    if row is not None:
+        token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        db.execute("DELETE FROM password_resets WHERE customer_id = ?", (row["id"],))
+        db.execute(
+            """INSERT INTO password_resets (customer_id, token_hash, expires_at)
+               VALUES (?, ?, datetime('now', '+1 hour'))""",
+            (row["id"], token_hash),
+        )
+        db.commit()
+        reset_url = url_for("pages.account_reset_password", _external=True) + "?token=" + token
+        send_password_reset_email(db, row["name"], row["email"], reset_url)
+
+    # Same response whether or not an account exists, so emails can't be enumerated.
+    return jsonify({"ok": True})
+
+
+@api_customers_bp.route("/password-reset/confirm", methods=["POST"])
+def password_reset_confirm():
+    data = request.get_json(force=True, silent=True) or {}
+    token = (data.get("token") or "").strip()
+    password = data.get("password") or ""
+    if not token:
+        return jsonify({"error": "Missing reset token"}), 400
+    if len(password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters"}), 400
+
+    db = get_db()
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    row = db.execute(
+        """SELECT * FROM password_resets
+           WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')""",
+        (token_hash,),
+    ).fetchone()
+    if row is None:
+        return jsonify({"error": "This reset link is invalid or has expired. Request a new one."}), 400
+
+    db.execute(
+        "UPDATE customers SET password_hash = ?, updated_at = datetime('now') WHERE id = ?",
+        (generate_password_hash(password), row["customer_id"]),
+    )
+    db.execute("UPDATE password_resets SET used_at = datetime('now') WHERE id = ?", (row["id"],))
+    db.commit()
+    return jsonify({"ok": True})
 
 
 @api_customers_bp.route("/logout", methods=["POST"])

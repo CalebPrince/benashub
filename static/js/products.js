@@ -57,7 +57,7 @@ BH.products = (() => {
 
     try {
       const products = await BH.api.get('/products');
-      const list = products.slice(0, 8);
+      const list = products.slice(0, 6);
       featured.innerHTML = list.map(productCard).join('');
       wireAddToCartButtons(featured, list);
     } catch (e) { /* leave featured empty on failure */ }
